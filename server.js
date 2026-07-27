@@ -28,15 +28,11 @@ const ROWS = {
 
 // ---------- Pola judul & deskripsi SEO (sama untuk SEMUA halaman detail) ----------
 function seoTitle(kind, title, year) {
-  const label = kind === 'movie' ? 'หนัง' : 'ซีรีส์';
-  const y = year || 'ไม่ทราบปีฉาย';
-  return `[${label}] ${title} (${y}) เรื่องย่อ เรตติ้ง นักแสดง ตัวอย่างหนัง สรุปครบ`;
+  return `(ดูหนังใหม่‼️)▷ "${title}" (${year || ''}) เต็มเรื่อง ซับไทย ดูฟรี`;
 }
 
 function seoDescription(title, year, genreNames) {
-  const yearPart = year ? `ปี ${year}, ` : '';
-  const genrePart = genreNames ? `แนว ${genreNames}, ` : '';
-  return `เรื่องย่อ นักแสดง เรตติ้ง และตัวอย่างหนังอย่างเป็นทางการของ ${title} ดูได้ที่ซีนีบ็อกซ์ ${genrePart}${yearPart}ข้อมูลฉายครบถ้วน`;
+  return `ดู ${title} (${year || ''}) เต็มเรื่อง ซับไทย HD ฟรี พร้อมเรื่องย่อ นักแสดง คะแนนรีวิว และตัวอย่างภาพยนตร์ล่าสุด อัปเดตทุกวัน`;
 }
 
 // ---------- HOME (/, /movie, /tv) ----------
