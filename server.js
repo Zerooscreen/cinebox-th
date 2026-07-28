@@ -122,33 +122,42 @@ app.get('/movie/:id/:slug?', async (req, res) => {
             <span class="m-item">${escapeHtml(data.status || '')}</span>
           </div>
           ${genreRow(data.genres)}
-
+          
 <div class="action-buttons">
-  <a href="#trailer" class="btn-watch">▶ ดูหนัง</a>
-  <a href="#trailer" class="btn-trailer">
-    🎬 ตัวอย่าง
-  </a>
 
-  <a href="https://www.themoviedb.org/movie/${data.id}"
-     target="_blank"
-     class="btn-tmdb">
-    TMDB
-  </a>
+<a href="javascript:void(0)"
+   class="btn-watch"
+   onclick="document.getElementById('trailer')?.scrollIntoView({behavior:'smooth'})">
+   ▶ ดูหนัง
+</a>
 
-  <button
-    class="btn-share"
-    onclick="navigator.share ? navigator.share({
-      title:'${escapeHtml(data.title)}',
-      url:window.location.href
-    }) : navigator.clipboard.writeText(window.location.href)">
-    แชร์
-  </button>
+<a href="javascript:void(0)"
+   class="btn-trailer"
+   onclick="document.getElementById('trailer')?.scrollIntoView({behavior:'smooth'})">
+   🎬 ตัวอย่าง
+</a>
+
+<a href="https://www.themoviedb.org/movie/${data.id}"
+   target="_blank"
+   class="btn-tmdb">
+   TMDB
+</a>
+
+<button
+ class="btn-share"
+ onclick="navigator.share ? navigator.share({
+ title:'${escapeHtml(data.title)}',
+ url:window.location.href
+ }) : navigator.clipboard.writeText(window.location.href)">
+ แชร์
+</button>
+</div>
 </div>
         </div>
       </div>
       <div class="section-block"><h3>เรื่องย่อ</h3><div class="bio-text">${escapeHtml(data.overview) || 'ยังไม่มีเรื่องย่อ'}</div></div>
       ${nativeBannerAd()}
-      <div id="trailer" class="section-block"><h3>ตัวอย่างหนัง</h3>${trailerBlock(videos)}</div>
+      <div id="trailer" class="section-block trailer-wrap"><h3>ตัวอย่างหนัง</h3>${trailerBlock(videos)}</div>
       <div class="section-block"><h3>นักแสดง</h3>${castGrid(credits)}</div>
       ${sideBannerAd()}
       ${movieJsonLd(data, `${SITE_URL}/movie/${id}/${encodeURIComponent(correctSlug)}`)}
