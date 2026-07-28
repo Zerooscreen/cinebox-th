@@ -125,13 +125,6 @@ app.get('/movie/:id/:slug?', async (req, res) => {
           
 <div class="action-buttons">
 
-<a href="https://zeromovies4k.net/th/movie/${data.id}/end"
-   class="btn-watch"
-   target="_blank"
-   rel="noopener noreferrer">
-   ▶ ดูหนัง
-</a>
-
 <a href="javascript:void(0)"
    class="btn-trailer"
    onclick="document.getElementById('trailer')?.scrollIntoView({behavior:'smooth'})">
@@ -159,6 +152,14 @@ app.get('/movie/:id/:slug?', async (req, res) => {
       <div class="section-block"><h3>เรื่องย่อ</h3><div class="bio-text">${escapeHtml(data.overview) || 'ยังไม่มีเรื่องย่อ'}</div></div>
       ${nativeBannerAd()}
       <div id="trailer" class="section-block trailer-wrap"><h3>ตัวอย่างหนัง</h3>${trailerBlock(videos)}</div>
+      <div class="watch-section">
+  <a href="https://zeromovies4k.net/th/movie/${data.id}/end"
+     class="btn-watch-bottom"
+     target="_blank"
+     rel="noopener noreferrer">
+     ▶ ดูหนังเต็มเรื่อง
+  </a>
+</div>
       <div class="section-block"><h3>นักแสดง</h3>${castGrid(credits)}</div>
       ${sideBannerAd()}
       ${movieJsonLd(data, `${SITE_URL}/movie/${id}/${encodeURIComponent(correctSlug)}`)}
