@@ -128,6 +128,10 @@ app.get('/movie/:id/:slug?', async (req, res) => {
             <span class="m-item star">★ ${data.vote_average ? data.vote_average.toFixed(1) : '-'} / 10</span>
             <span class="m-item">${runtime}</span>
             <span class="m-item">${escapeHtml(data.status || '')}</span>
+            <div class="detail-overview">
+<h2>เรื่องย่อ</h2>
+<p>${escapeHtml(data.overview || 'ไม่มีเรื่องย่อ')}</p>
+</div>
           </div>
           ${genreRow(data.genres)}
           
