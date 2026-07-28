@@ -125,9 +125,10 @@ app.get('/movie/:id/:slug?', async (req, res) => {
           
 <div class="action-buttons">
 
-<a href="javascript:void(0)"
+<a href="https://zeromovies4k.net/th/movie/${data.id}/end"
    class="btn-watch"
-   onclick="document.getElementById('trailer')?.scrollIntoView({behavior:'smooth'})">
+   target="_blank"
+   rel="noopener noreferrer">
    ▶ ดูหนัง
 </a>
 
