@@ -199,3 +199,33 @@ footer a{ color:var(--muted); }
 .btn-watch-bottom:hover{
     background:#d90000;
 }
+/* ===== Similar Movies ===== */
+
+.similar-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+    gap:16px;
+    margin-top:18px;
+}
+
+.similar-grid .poster-card{
+    text-decoration:none;
+    color:#fff;
+    transition:.25s;
+}
+
+.similar-grid .poster-card:hover{
+    transform:translateY(-5px);
+}
+
+.similar-grid img{
+    width:100%;
+    border-radius:10px;
+    display:block;
+}
+
+.similar-grid .poster-title{
+    margin-top:8px;
+    font-size:14px;
+    text-align:center;
+}
