@@ -160,7 +160,7 @@ app.get('/movie/:id/:slug?', async (req, res) => {
 </div>
         </div>
       </div>
-      <div class="section-block"><h3>เรื่องย่อ</h3><div class="bio-text">${escapeHtml(data.overview) || 'ยังไม่มีเรื่องย่อ'}</div></div>
+      
       ${nativeBannerAd()}
       <div id="trailer" class="section-block trailer-wrap"><h3>ตัวอย่างหนัง</h3>${trailerBlock(videos)}</div>
       <div class="watch-section">
