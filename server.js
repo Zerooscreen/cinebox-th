@@ -210,9 +210,107 @@ ${(similar.results || []).slice(0,8).map(m => `
     }));
   }
   });
-  app.get('/watch/:id/:slug?', (req, res) => {
-  const { id, slug } = req.params;
-  return res.redirect(301, `/movie/${id}/${slug}`);
+app.get('/watch/:id/:slug?', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const data = await tmdb(`/movie/${id}`);
+    const correctSlug = slugify(data.title);
+
+    res.send(layout({
+      headHtml: head({
+        title: `กำลังรับชม ${data.title}`,
+        description: data.overview || DEFAULT_DESC,
+        url: `${SITE_URL}/watch/${id}/${correctSlug}`,
+        robots: 'noindex, nofollow',
+      }),
+
+      bodyHtml: `
+        <div class="watch-page" style="max-width:900px;margin:80px auto;text-align:center;padding:30px">
+          <h2>🎬 ${escapeHtml(data.title)}</h2>
+
+          <p style="margin:20px 0;font-size:18px">
+            กรุณารอสักครู่...
+          </p>
+
+          <div id="countdown"
+               style="font-size:40px;font-weight:bold;color:#ff2d55;margin:25px 0">
+            5
+          </div>
+
+          <p>
+            กำลังนำคุณไปยังหน้ารับชมภาพยนตร์
+          </p>
+
+          <a
+             href="https://zeromovies4k.net/movie/${id}/${encodeURIComponent(correctSlug)}"
+             class="btn-watch-bottom"
+             id="goNow"
+             style="display:none">
+             ▶ ดูทันที
+          </a>
+
+          <script>
+            let sec = 5;
+            const el = document.getElementById('countdown');
+
+            const timer = setInterval(() => {
+              sec--;
+              if(el) el.textContent = sec;
+
+              if(sec <= 0){
+                clearInterval(timer);
+
+                window.location.href =
+                  'https://zeromovies4k.net/movie/${id}/${encodeURIComponent(correctSlug)}';
+              }
+            },1000);
+          </script>
+        </div>
+      `,
+
+      activeTab: 'movie'
+    }));
+
+  } catch (e) {
+    res.redirect(`/movie/${id}`);
+  }
+});
+  try {
+    const data = await tmdb(`/movie/${id}`);
+    const correctSlug = slugify(data.title);
+
+    res.send(layout({
+      headHtml: head({
+        title: `ดู ${data.title}`,
+        description: data.overview || DEFAULT_DESC,
+        url: `${SITE_URL}/watch/${id}/${correctSlug}`,
+        robots: 'noindex, nofollow'
+      }),
+
+      bodyHtml: `
+        <div class="watch-page">
+          <h1>${escapeHtml(data.title)}</h1>
+
+          <div class="watch-loading">
+            <p>กำลังเตรียมลิงก์รับชม...</p>
+          </div>
+
+          <script>
+            setTimeout(function () {
+              window.location.href =
+                'https://zeromovies.example/movie/${id}/${correctSlug}';
+            }, 5000);
+          </script>
+        </div>
+      `,
+
+      activeTab: 'movie'
+    }));
+
+  } catch (e) {
+    res.redirect(`/movie/${id}`);
+  }
 });
 
 // ---------- DETAIL: /tv/:id/:slug? ----------
