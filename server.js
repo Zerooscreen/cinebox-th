@@ -209,6 +209,7 @@ ${(similar.results || []).slice(0,8).map(m => `
       activeTab: 'movie',
     }));
   }
+  });
   app.get('/watch/:id/:slug?', (req, res) => {
   const { id, slug } = req.params;
   return res.redirect(301, `/movie/${id}/${slug}`);
