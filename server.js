@@ -261,8 +261,9 @@ app.get('/watch/:id/:slug?', async (req, res) => {
               if(sec <= 0){
                 clearInterval(timer);
 
-                window.location.href =
-                  `https://zeromovies4k.net/th/movie/${id}/${encodeURIComponent(correctSlug)}/end`;
+            window.location.href =
+               'https://zeromovies4k.net/th/movie/${id}/${encodeURIComponent(correctSlug)}/end';
+               
               }
             },1000);
           </script>
