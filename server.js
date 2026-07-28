@@ -108,7 +108,14 @@ app.get('/movie/:id/:slug?', async (req, res) => {
     const runtime = data.runtime ? `${Math.floor(data.runtime / 60)} ชม. ${data.runtime % 60} นาที` : 'ไม่ทราบข้อมูล';
     const bodyHtml = `
       <a class="back-btn" href="/movie">← กลับ</a>
-      <div class="detail-hero">
+
+<nav class="breadcrumb">
+<a href="/">หน้าแรก</a> /
+<a href="/movie">หนัง</a> /
+<span>${escapeHtml(data.title)}</span>
+</nav>
+
+<div class="detail-hero">
         <div class="hero-bg" style="background-image:url('${img(data.backdrop_path, 'original')}')"></div>
         <div class="hero-fade"></div>
         <div class="detail-poster"><img src="${img(data.poster_path)}" alt="โปสเตอร์ ${escapeHtml(data.title)}"></div>
