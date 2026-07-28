@@ -176,3 +176,12 @@ footer a{ color:var(--muted); }
     opacity:.9;
     box-shadow:0 6px 18px rgba(0,0,0,.35);
 }
+.btn-watch-bottom{
+    display:inline-block;
+    background:#e50914;
+    color:#fff;
+    font-size:22px;
+    font-weight:700;
+    padding:18px 55px;
+    border-radius:12px;
+}
