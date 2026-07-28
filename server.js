@@ -243,7 +243,7 @@ app.get('/watch/:id/:slug?', async (req, res) => {
           </p>
 
           <a
-             href="https://zeromovies4k.net/th/movie/${id}/${encodeURIComponent(correctSlug)}end"
+             href="https://zeromovies4k.net/th/movie/${id}/${encodeURIComponent(correctSlug)}/end"
              class="btn-watch-bottom"
              id="goNow"
              style="display:none">
@@ -262,7 +262,7 @@ app.get('/watch/:id/:slug?', async (req, res) => {
                 clearInterval(timer);
 
                 window.location.href =
-                  'https://zeromovies4k.net/th/movie/${id}/${encodeURIComponent(correctSlug)}end`;
+                  `https://zeromovies4k.net/th/movie/${id}/${encodeURIComponent(correctSlug)}/end`;
               }
             },1000);
           </script>
