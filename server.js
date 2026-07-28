@@ -164,7 +164,7 @@ app.get('/movie/:id/:slug?', async (req, res) => {
       ${nativeBannerAd()}
       <div id="trailer" class="section-block trailer-wrap"><h3>ตัวอย่างหนัง</h3>${trailerBlock(videos)}</div>
       <div class="watch-section">
-  <a href="https://zeromovies4k.net/th/movie/${data.id}/end"
+  <a href="/watch/${id}/${encodeURIComponent(correctSlug)}"
      class="btn-watch-bottom"
      target="_blank"
      rel="noopener noreferrer">
@@ -209,6 +209,9 @@ ${(similar.results || []).slice(0,8).map(m => `
       activeTab: 'movie',
     }));
   }
+  app.get('/watch/:id/:slug?', (req, res) => {
+  const { id, slug } = req.params;
+  return res.redirect(301, `/movie/${id}/${slug}`);
 });
 
 // ---------- DETAIL: /tv/:id/:slug? ----------
