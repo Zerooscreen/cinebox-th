@@ -122,3 +122,57 @@ footer a{ color:var(--muted); }
   .search-wrap{ order:3; max-width:100%; }
   main{ padding:0 20px 80px; }
 }
+/* ===========================
+   ACTION BUTTONS
+=========================== */
+
+.action-buttons{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    margin-top:20px;
+}
+
+.action-buttons a,
+.action-buttons button{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:12px 20px;
+    border-radius:8px;
+    font-size:14px;
+    font-weight:700;
+    color:#fff;
+    text-decoration:none;
+    border:none;
+    cursor:pointer;
+    transition:.25s;
+}
+
+.btn-watch{
+    background:#e50914;
+}
+
+.btn-trailer{
+    background:#ff9800;
+}
+
+.btn-imdb{
+    background:#f5c518;
+    color:#111 !important;
+}
+
+.btn-tmdb{
+    background:#01b4e4;
+}
+
+.btn-share{
+    background:#16a34a;
+}
+
+.action-buttons a:hover,
+.action-buttons button:hover{
+    transform:translateY(-3px);
+    opacity:.9;
+    box-shadow:0 6px 18px rgba(0,0,0,.35);
+}
