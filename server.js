@@ -124,16 +124,9 @@ app.get('/movie/:id/:slug?', async (req, res) => {
           ${genreRow(data.genres)}
 
 <div class="action-buttons">
-  <a href="#" class="btn-watch">▶ ดูหนัง</a>
-
+  <a href="#trailer" class="btn-watch">▶ ดูหนัง</a>
   <a href="#trailer" class="btn-trailer">
     🎬 ตัวอย่าง
-  </a>
-
-  <a href="https://www.imdb.com/find?q=${encodeURIComponent(data.title)}"
-     target="_blank"
-     class="btn-imdb">
-    IMDb
   </a>
 
   <a href="https://www.themoviedb.org/movie/${data.id}"
@@ -155,7 +148,7 @@ app.get('/movie/:id/:slug?', async (req, res) => {
       </div>
       <div class="section-block"><h3>เรื่องย่อ</h3><div class="bio-text">${escapeHtml(data.overview) || 'ยังไม่มีเรื่องย่อ'}</div></div>
       ${nativeBannerAd()}
-      <div class="section-block"><h3>ตัวอย่างหนัง</h3>${trailerBlock(videos)}</div>
+      <div id="trailer" class="section-block"><h3>ตัวอย่างหนัง</h3>${trailerBlock(videos)}</div>
       <div class="section-block"><h3>นักแสดง</h3>${castGrid(credits)}</div>
       ${sideBannerAd()}
       ${movieJsonLd(data, `${SITE_URL}/movie/${id}/${encodeURIComponent(correctSlug)}`)}
