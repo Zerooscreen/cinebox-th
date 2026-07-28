@@ -94,11 +94,12 @@ app.get('/tv', (req, res) => renderHome(req, res, 'tv'));
 app.get('/movie/:id/:slug?', async (req, res) => {
   const { id } = req.params;
   try {
-    const [data, credits, videos] = await Promise.all([
-      tmdb(`/movie/${id}`),
-      tmdb(`/movie/${id}/credits`),
-      tmdb(`/movie/${id}/videos`),
-    ]);
+    const [data, credits, videos, similar] = await Promise.all([
+  tmdb(`/movie/${id}`),
+  tmdb(`/movie/${id}/credits`),
+  tmdb(`/movie/${id}/videos`),
+  tmdb(`/movie/${id}/similar`),
+]);
     const correctSlug = slugify(data.title);
     if (req.params.slug !== correctSlug) {
       return res.redirect(301, `/movie/${id}/${encodeURIComponent(correctSlug)}`);
