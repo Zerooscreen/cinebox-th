@@ -250,3 +250,24 @@ footer a{ color:var(--muted); }
 .breadcrumb span{
     color:#fff;
 }
+.detail-overview{
+    margin:24px 0;
+}
+
+.detail-overview h2{
+    font-size:24px;
+    color:#fff;
+    margin-bottom:12px;
+    border-left:4px solid #e50914;
+    padding-left:12px;
+}
+
+.detail-overview p{
+    color:#ccc;
+    line-height:1.9;
+    font-size:16px;
+}
+
+.genre-row{
+    margin-top:24px;
+}
