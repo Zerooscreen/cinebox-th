@@ -276,42 +276,7 @@ app.get('/watch/:id/:slug?', async (req, res) => {
     res.redirect(`/movie/${id}`);
   }
 });
-  try {
-    const data = await tmdb(`/movie/${id}`);
-    const correctSlug = slugify(data.title);
-
-    res.send(layout({
-      headHtml: head({
-        title: `ดู ${data.title}`,
-        description: data.overview || DEFAULT_DESC,
-        url: `${SITE_URL}/watch/${id}/${correctSlug}`,
-        robots: 'noindex, nofollow'
-      }),
-
-      bodyHtml: `
-        <div class="watch-page">
-          <h1>${escapeHtml(data.title)}</h1>
-
-          <div class="watch-loading">
-            <p>กำลังเตรียมลิงก์รับชม...</p>
-          </div>
-
-          <script>
-            setTimeout(function () {
-              window.location.href =
-                'https://zeromovies.example/movie/${id}/${correctSlug}';
-            }, 5000);
-          </script>
-        </div>
-      `,
-
-      activeTab: 'movie'
-    }));
-
-  } catch (e) {
-    res.redirect(`/movie/${id}`);
-  }
-});
+ 
 
 // ---------- DETAIL: /tv/:id/:slug? ----------
 app.get('/tv/:id/:slug?', async (req, res) => {
