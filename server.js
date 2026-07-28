@@ -163,6 +163,18 @@ app.get('/movie/:id/:slug?', async (req, res) => {
 </div>
       <div class="section-block"><h3>นักแสดง</h3>${castGrid(credits)}</div>
       ${sideBannerAd()}
+
+<div class="section-block">
+<h3>หนังที่คล้ายกัน</h3>
+<div class="similar-grid">
+${(similar.results || []).slice(0,8).map(m => `
+<a class="poster-card" href="/movie/${m.id}/${encodeURIComponent(slugify(m.title))}">
+<img src="${img(m.poster_path)}" alt="${escapeHtml(m.title)}" loading="lazy">
+<div class="poster-title">${escapeHtml(m.title)}</div>
+</a>
+`).join('')}
+</div>
+</div>
       ${movieJsonLd(data, `${SITE_URL}/movie/${id}/${encodeURIComponent(correctSlug)}`)}
     `;
 
