@@ -132,7 +132,6 @@ app.get('/movie/:id/:slug?', async (req, res) => {
 <h2>เรื่องย่อ</h2>
 <p>${escapeHtml(data.overview || 'ไม่มีเรื่องย่อ')}</p>
 </div>
-          </div>
           ${genreRow(data.genres)}
           
 <div class="action-buttons">
