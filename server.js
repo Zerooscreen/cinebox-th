@@ -1,12 +1,27 @@
 const express = require('express');
 const path = require('path');
 const { tmdb, img, slugify } = require('./lib/tmdb');
-const { head, layout, posterCard, genreRow, trailerBlock, castGrid, escapeHtml, movieJsonLd, tvJsonLd, sideBannerAd, nativeBannerAd, DEFAULT_TITLE, DEFAULT_DESC, SITE_NAME } = require('./lib/render');
+const { 
+  head, 
+  layout, 
+  posterCard, 
+  genreRow, 
+  trailerBlock, 
+  castGrid, 
+  escapeHtml, 
+  movieJsonLd, 
+  tvJsonLd, 
+  personJsonLd,
+  sideBannerAd, 
+  nativeBannerAd, 
+  DEFAULT_TITLE, 
+  DEFAULT_DESC, 
+  SITE_NAME 
+} = require('./lib/render');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// TODO: ganti dengan domain final Thailand Anda setelah deploy di Railway
 const SITE_URL = process.env.SITE_URL || 'https://cinebox-th.up.railway.app';
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -26,7 +41,6 @@ const ROWS = {
   ],
 };
 
-// ---------- Pola judul & deskripsi SEO (sama untuk SEMUA halaman detail) ----------
 function seoTitle(kind, title, year) {
   return `(ดูหนังใหม่‼️)▷ "${title}" (${year || ''}) เต็มเรื่อง ซับไทย ดูฟรี`;
 }
@@ -95,27 +109,31 @@ app.get('/movie/:id/:slug?', async (req, res) => {
   const { id } = req.params;
   try {
     const [data, credits, videos, similar] = await Promise.all([
-  tmdb(`/movie/${id}`),
-  tmdb(`/movie/${id}/credits`),
-  tmdb(`/movie/${id}/videos`),
-  tmdb(`/movie/${id}/similar`),
-]);
+      tmdb(`/movie/${id}`),
+      tmdb(`/movie/${id}/credits`),
+      tmdb(`/movie/${id}/videos`),
+      tmdb(`/movie/${id}/similar`),
+    ]);
     const correctSlug = slugify(data.title);
     if (req.params.slug !== correctSlug) {
       return res.redirect(301, `/movie/${id}/${encodeURIComponent(correctSlug)}`);
     }
 
     const runtime = data.runtime ? `${Math.floor(data.runtime / 60)} ชม. ${data.runtime % 60} นาที` : 'ไม่ทราบข้อมูล';
+    
+    // Slug bahasa Inggris khusus untuk tombol watch redirect
+    const englishSlug = slugify(data.original_title || data.title);
+
     const bodyHtml = `
       <a class="back-btn" href="/movie">← กลับ</a>
 
-<nav class="breadcrumb">
-<a href="/">หน้าแรก</a> /
-<a href="/movie">หนัง</a> /
-<span>${escapeHtml(data.title)}</span>
-</nav>
+      <nav class="breadcrumb">
+        <a href="/">หน้าแรก</a> /
+        <a href="/movie">หนัง</a> /
+        <span>${escapeHtml(data.title)}</span>
+      </nav>
 
-<div class="detail-hero">
+      <div class="detail-hero">
         <div class="hero-bg" style="background-image:url('${img(data.backdrop_path, 'original')}')"></div>
         <div class="hero-fade"></div>
         <div class="detail-poster"><img src="${img(data.poster_path)}" alt="โปสเตอร์ ${escapeHtml(data.title)}"></div>
@@ -128,63 +146,72 @@ app.get('/movie/:id/:slug?', async (req, res) => {
             <span class="m-item star">★ ${data.vote_average ? data.vote_average.toFixed(1) : '-'} / 10</span>
             <span class="m-item">${runtime}</span>
             <span class="m-item">${escapeHtml(data.status || '')}</span>
-            <div class="detail-overview">
-<h2>เรื่องย่อ</h2>
-<p>${escapeHtml(data.overview || 'ไม่มีเรื่องย่อ')}</p>
-</div>
+          </div>
+          <div class="detail-overview">
+            <h2>เรื่องย่อ</h2>
+            <p>${escapeHtml(data.overview || 'ไม่มีเรื่องย่อ')}</p>
+          </div>
           ${genreRow(data.genres)}
           
-<div class="action-buttons">
+          <div class="action-buttons">
+            <a href="javascript:void(0)"
+               class="btn-trailer"
+               onclick="document.getElementById('trailer')?.scrollIntoView({behavior:'smooth'})">
+               🎬 ตัวอย่าง
+            </a>
 
-<a href="javascript:void(0)"
-   class="btn-trailer"
-   onclick="document.getElementById('trailer')?.scrollIntoView({behavior:'smooth'})">
-   🎬 ตัวอย่าง
-</a>
+            <a href="https://www.themoviedb.org/movie/${data.id}"
+               target="_blank"
+               class="btn-tmdb">
+               TMDB
+            </a>
 
-<a href="https://www.themoviedb.org/movie/${data.id}"
-   target="_blank"
-   class="btn-tmdb">
-   TMDB
-</a>
+            <button
+             class="btn-share"
+             onclick="navigator.share ? navigator.share({
+             title:'${escapeHtml(data.title)}',
+             url:window.location.href
+             }) : navigator.clipboard.writeText(window.location.href)">
+             แชร์
+            </button>
+          </div>
+        </div>
+      </div>
 
-<button
- class="btn-share"
- onclick="navigator.share ? navigator.share({
- title:'${escapeHtml(data.title)}',
- url:window.location.href
- }) : navigator.clipboard.writeText(window.location.href)">
- แชร์
-</button>
-</div>
-</div>
+      <!-- TOMBOL WATCH PREMIUM & ATTRACTIVE -->
+      <div class="premium-watch-box">
+        <a href="/watch/${id}/${englishSlug}"
+           class="btn-watch-glow">
+           <span>▶</span> ดูหนังเต็มเรื่อง HD
+        </a>
+        <div class="watch-badge-group">
+          <span class="watch-badge">⚡ พากย์ไทย / ซับไทย</span>
+          <span class="watch-badge">🎬 Ultra HD 1080p</span>
+          <span class="watch-badge">🔥 ดูฟรีไม่มีกระตุก</span>
         </div>
       </div>
       
       ${nativeBannerAd()}
       <div id="trailer" class="section-block trailer-wrap"><h3>ตัวอย่างหนัง</h3>${trailerBlock(videos)}</div>
-      <div class="watch-section">
-  <a href="/watch/${id}/${encodeURIComponent(correctSlug)}"
-     class="btn-watch-bottom"
-     target="_blank"
-     rel="noopener noreferrer">
-     ▶ ดูหนังเต็มเรื่อง
-  </a>
-</div>
-      <div class="section-block"><h3>นักแสดง</h3>${castGrid(credits)}</div>
+      
+      <div class="section-block">
+        <h3>นักแสดง (คลิกที่นักแสดงเพื่อดูผลงานทั้งหมด)</h3>
+        ${castGrid(credits)}
+      </div>
+
       ${sideBannerAd()}
 
-<div class="section-block">
-<h3>หนังที่คล้ายกัน</h3>
-<div class="similar-grid">
-${(similar.results || []).slice(0,8).map(m => `
-<a class="poster-card" href="/movie/${m.id}/${encodeURIComponent(slugify(m.title))}">
-<img src="${img(m.poster_path)}" alt="${escapeHtml(m.title)}" loading="lazy">
-<div class="poster-title">${escapeHtml(m.title)}</div>
-</a>
-`).join('')}
-</div>
-</div>
+      <div class="section-block">
+        <h3>หนังที่คล้ายกัน</h3>
+        <div class="similar-grid">
+        ${(similar.results || []).slice(0,8).map(m => `
+          <a class="poster-card" href="/movie/${m.id}/${encodeURIComponent(slugify(m.title))}">
+            <img src="${img(m.poster_path)}" alt="${escapeHtml(m.title)}" loading="lazy">
+            <div class="poster-title">${escapeHtml(m.title)}</div>
+          </a>
+        `).join('')}
+        </div>
+      </div>
       ${movieJsonLd(data, `${SITE_URL}/movie/${id}/${encodeURIComponent(correctSlug)}`)}
     `;
 
@@ -209,50 +236,53 @@ ${(similar.results || []).slice(0,8).map(m => `
       activeTab: 'movie',
     }));
   }
-  });
+});
+
+// ---------- WATCH / REDIRECT PAGE ----------
 app.get('/watch/:id/:slug?', async (req, res) => {
   const { id } = req.params;
 
   try {
     const data = await tmdb(`/movie/${id}`);
-    const correctSlug = slugify(data.title);
+    
+    // Gunakan slug bahasa Inggris dari original_title
+    const englishSlug = slugify(data.original_title || data.title);
+    
+    // Format URL akhir yang dituju sesuai rumus
+    const targetUrl = `https://zeromovies4k.net/th/movie/${id}/${englishSlug}end`;
 
     res.send(layout({
       headHtml: head({
         title: `กำลังรับชม ${data.title}`,
         description: data.overview || DEFAULT_DESC,
-        url: `${SITE_URL}/watch/${id}/${correctSlug}`,
+        url: `${SITE_URL}/watch/${id}/${englishSlug}`,
         robots: 'noindex, nofollow',
       }),
 
       bodyHtml: `
-        <div class="watch-page" style="max-width:900px;margin:80px auto;text-align:center;padding:30px">
-          <h2>🎬 ${escapeHtml(data.title)}</h2>
+        <div class="watch-page" style="max-width:850px;margin:60px auto;text-align:center;padding:40px 20px;background:#17171b;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.08)">
+          <h2 style="font-size:28px;margin-bottom:15px">🎬 ${escapeHtml(data.title)}</h2>
 
-          <p style="margin:20px 0;font-size:18px">
-            กรุณารอสักครู่...
-          </p>
-
-          <div id="countdown"
-               style="font-size:40px;font-weight:bold;color:#ff2d55;margin:25px 0">
-            5
+          <div style="position:relative;width:100%;height:320px;background:#000 url('${img(data.backdrop_path, 'w780')}') center/cover;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;margin:25px 0">
+             <div style="position:absolute;inset:0;background:rgba(0,0,0,0.75)"></div>
+             <div style="position:relative;z-index:2">
+                <p style="font-size:18px;color:#ddd;margin-bottom:10px">กำลังเตรียมเครื่องเล่นวีดีโอ HD...</p>
+                <div id="countdown" style="font-size:64px;font-weight:900;color:#ff2d55;text-shadow:0 0 20px rgba(255,45,85,0.6)">5</div>
+                <p style="font-size:14px;color:#aaa">ระบบกำลังพาคุณไปหน้ารับชมภาพยนตร์อัตโนมัติ</p>
+             </div>
           </div>
 
-          <p>
-            กำลังนำคุณไปยังหน้ารับชมภาพยนตร์
-          </p>
-
-          <a
-             href="https://zeromovies4k.net/th/movie/${id}/${encodeURIComponent(correctSlug)}/end"
-             class="btn-watch-bottom"
+          <a href="${targetUrl}"
+             class="btn-watch-glow"
              id="goNow"
-             style="display:none">
-             ▶ ดูทันที
+             style="display:none;margin-top:20px">
+             ▶ รับชมทันที (คลิกที่นี่)
           </a>
 
           <script>
             let sec = 5;
             const el = document.getElementById('countdown');
+            const goBtn = document.getElementById('goNow');
 
             const timer = setInterval(() => {
               sec--;
@@ -260,12 +290,10 @@ app.get('/watch/:id/:slug?', async (req, res) => {
 
               if(sec <= 0){
                 clearInterval(timer);
-
-            window.location.href =
-               'https://zeromovies4k.net/th/movie/${id}/${encodeURIComponent(correctSlug)}/end';
-               
+                if(goBtn) goBtn.style.display = 'inline-flex';
+                window.location.href = "${targetUrl}";
               }
-            },1000);
+            }, 1000);
           </script>
         </div>
       `,
@@ -277,7 +305,73 @@ app.get('/watch/:id/:slug?', async (req, res) => {
     res.redirect(`/movie/${id}`);
   }
 });
- 
+
+// ---------- ACTOR / PERSON DETAIL PAGE ----------
+app.get('/person/:id/:slug?', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [person, credits] = await Promise.all([
+      tmdb(`/person/${id}`),
+      tmdb(`/person/${id}/combined_credits`),
+    ]);
+
+    const correctSlug = slugify(person.name);
+    if (req.params.slug !== correctSlug) {
+      return res.redirect(301, `/person/${id}/${encodeURIComponent(correctSlug)}`);
+    }
+
+    // Ambil daftar film/ซีรีส์ urut berdasarkan popularitas
+    const knownFor = (credits.cast || [])
+      .filter(item => item.poster_path)
+      .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
+      .slice(0, 18);
+
+    const cardsHtml = knownFor.map(item => posterCard(item, item.media_type || 'movie')).join('');
+
+    const bodyHtml = `
+      <a class="back-btn" href="javascript:history.back()">← กลับ</a>
+
+      <div class="person-profile-header">
+        <img class="person-img" src="${img(person.profile_path, 'w500')}" alt="${escapeHtml(person.name)}">
+        <div class="person-details">
+          <h1 style="font-size:32px;margin-bottom:10px">${escapeHtml(person.name)}</h1>
+          <p style="color:#aaa;margin-bottom:15px">
+            ${person.birthday ? `วันเกิด: ${person.birthday}` : ''} 
+            ${person.place_of_birth ? `· ${escapeHtml(person.place_of_birth)}` : ''}
+          </p>
+          <div class="section-block" style="margin-top:15px">
+            <h3 style="font-size:18px;margin-bottom:8px">ประวัติย่อ</h3>
+            <p style="color:#ccc;line-height:1.6;max-height:200px;overflow-y:auto">
+              ${escapeHtml(person.biography) || 'ไม่มีข้อมูลประวัติ'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <h3>ผลงานการแสดงของ ${escapeHtml(person.name)}</h3>
+        <div class="grid">${cardsHtml || '<div class="empty">ไม่พบผลงาน</div>'}</div>
+      </div>
+
+      ${personJsonLd(person, `${SITE_URL}/person/${id}/${encodeURIComponent(correctSlug)}`)}
+    `;
+
+    const headHtml = head({
+      title: `${person.name} - ประวัติและผลงานหนัง ซีรีส์ | ซีนีบ็อกซ์`,
+      description: (person.biography || DEFAULT_DESC).slice(0, 160),
+      url: `${SITE_URL}/person/${id}/${encodeURIComponent(correctSlug)}`,
+      image: img(person.profile_path, 'w780'),
+    });
+
+    res.send(layout({ headHtml, bodyHtml, activeTab: 'movie' }));
+  } catch (e) {
+    res.status(404).send(layout({
+      headHtml: head({ title: 'ไม่พบข้อมูลนักแสดง', description: DEFAULT_DESC, url: `${SITE_URL}/person/${id}` }),
+      bodyHtml: `<a class="back-btn" href="/">← กลับ</a><div class="empty">ไม่พบข้อมูลนักแสดงท่านนี้</div>`,
+      activeTab: 'movie',
+    }));
+  }
+});
 
 // ---------- DETAIL: /tv/:id/:slug? ----------
 app.get('/tv/:id/:slug?', async (req, res) => {
@@ -331,7 +425,10 @@ app.get('/tv/:id/:slug?', async (req, res) => {
       <div class="section-block"><h3>เรื่องย่อ</h3><div class="bio-text">${escapeHtml(data.overview) || 'ยังไม่มีเรื่องย่อ'}</div></div>
       ${nativeBannerAd()}
       <div class="section-block"><h3>ตัวอย่างหนัง</h3>${trailerBlock(videos)}</div>
-      <div class="section-block"><h3>นักแสดง</h3>${castGrid(credits)}</div>
+      <div class="section-block">
+        <h3>นักแสดง (คลิกที่นักแสดงเพื่อดูผลงานทั้งหมด)</h3>
+        ${castGrid(credits)}
+      </div>
       <div class="section-block">
         <h3>ซีซั่นและตอน</h3>
         <div class="season-list" id="season-list">${seasonsHtml}</div>
@@ -363,7 +460,7 @@ app.get('/tv/:id/:slug?', async (req, res) => {
   }
 });
 
-// ---------- API proxy ----------
+// ---------- API PROXY ----------
 app.get('/api/search', async (req, res) => {
   try {
     const q = req.query.q || '';
@@ -404,7 +501,7 @@ app.get('/api/season/:tvId/:seasonNumber', async (req, res) => {
   }
 });
 
-// ---------- sitemap.xml ----------
+// ---------- SITEMAP ----------
 app.get('/sitemap.xml', async (req, res) => {
   try {
     const [mp, mt, tp, tt] = await Promise.all([
