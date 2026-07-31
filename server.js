@@ -46,10 +46,6 @@ const ROWS = {
   ],
 };
 
-function seoTitle(kind, title, year) {
-  return `[ดูหนังออนไลน์] ${title} (${year || '2026'}) เต็มเรื่อง HD พากย์ไทย ซับไทย`;
-}
-
 // ---------- HOME (/, /movie, /tv) ----------
 async function renderHome(req, res, tab) {
   try {
@@ -211,8 +207,10 @@ app.get('/movie/:id/:slug?', async (req, res) => {
       ${movieJsonLd(data, `${SITE_URL}/movie/${id}/${encodeURIComponent(correctSlug)}`)}
     `;
 
+    const movieSeoTitle = `(ดูหนังใหม่‼️)▷ "${data.title}" (${(data.release_date || '').slice(0, 4) || '2026'}) เต็มเรื่อง ซับไทย ดูฟรี!`;
+
     const headHtml = head({
-      title: seoTitle('movie', data.title, (data.release_date || '').slice(0, 4)),
+      title: movieSeoTitle,
       description: data.overview || DEFAULT_DESC,
       url: `${SITE_URL}/movie/${id}/${encodeURIComponent(correctSlug)}`,
       image: img(data.backdrop_path || data.poster_path, 'w780'),
@@ -302,13 +300,14 @@ app.get('/watch/:id/:season/:episode', async (req, res) => {
 
   try {
     const data = await tmdb(`/tv/${id}`);
-    const englishSlug = slugify(data.name);
+    const englishSlug = slugify(data.original_name || data.name);
     const targetUrl = `https://zeromovies4k.net/pt/tv/${id}/${season}/${episode}/${englishSlug}end`;
     
-    // Format SEO Judul: ดูซีรี่ย์ Love Destiny (2026) บุพเพสันนิวาส Ep.1 (จบ)
+    // Format SEO Judul: ดูซีรี่ย์ [Nama Inggris] ([Tahun]) [Nama Asli/Thai] Ep.[Episode] (จบ)
     const tvYear = (data.first_air_date || '').slice(0, 4) || '2026';
+    const englishName = data.original_name || data.name || '';
     const thaiName = data.name || '';
-    const customTvSeoTitle = `ดูซีรี่ย์ ${englishSlug.replace(/-/g, ' ')} (${tvYear}) ${thaiName} Ep.${episode} (จบ)`;
+    const customTvSeoTitle = `ดูซีรี่ย์ ${englishName} (${tvYear}) ${thaiName} Ep.${episode} (จบ)`;
 
     res.send(layout({
       headHtml: head({
@@ -450,7 +449,7 @@ app.get('/tv/:id/:slug?', async (req, res) => {
           <img src="${img(s.poster_path, 'w92')}" alt="${escapeHtml(s.name)}">
           <div>
             <div class="s-title">${escapeHtml(s.name)}</div>
-            <div class="s-meta">${s.episode_count} ตอน · ${(s.air_date || '').slice(0, 4) || '2026'}</div>
+            <div class="s-meta">${s.episode_count}ตอน · ${(s.air_date || '').slice(0, 4) || '2026'}</div>
           </div>
           <div class="chev">▶</div>
         </div>
@@ -494,7 +493,9 @@ app.get('/tv/:id/:slug?', async (req, res) => {
     `;
 
     const tvYear = (data.first_air_date || '').slice(0, 4) || '2026';
-    const customTvHomeSeo = `ดูซีรี่ย์ ${correctSlug.replace(/-/g, ' ')} (${tvYear}) ${data.name} พากย์ไทย ซับไทย`;
+    const englishName = data.original_name || data.name || '';
+    const thaiName = data.name || '';
+    const customTvHomeSeo = `ดูซีรี่ย์ ${englishName} (${tvYear}) ${thaiName} พากย์ไทย ซับไทย`;
 
     const headHtml = head({
       title: customTvHomeSeo,
