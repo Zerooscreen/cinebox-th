@@ -20,20 +20,20 @@ async function doSearch(q) {
     const res = await fetch('/api/search?q=' + encodeURIComponent(q));
     const data = await res.json();
     if (!data.results.length) {
-      searchResults.innerHTML = `<div class="empty" style="padding:16px;">검색 결과가 없습니다.</div>`;
+      searchResults.innerHTML = `<div class="empty" style="padding:16px;">ไม่พบผลการค้นหา</div>`;
     } else {
       searchResults.innerHTML = data.results.map(item => `
         <a class="sr-item" href="/${item.type}/${item.id}/${item.slug}">
           <img src="${item.poster}" alt="${item.title}">
           <div>
             <div class="sr-title">${item.title}</div>
-            <div class="sr-meta">${item.type === 'movie' ? '영화' : '시리즈'} · ${item.year || '연도 미상'}</div>
+            <div class="sr-meta">${item.type === 'movie' ? 'ภาพยนตร์' : 'ซีรีส์'} · ${item.year || 'ไม่ทราบปี'}</div>
           </div>
         </a>
       `).join('');
     }
     searchResults.classList.add('show');
-  } catch (e) { /* diamkan, biarkan hasil kosong */ }
+  } catch (e) { /* diamkan */ }
 }
 
 // ---------- SEASON / EPISODE TOGGLE ----------
@@ -55,23 +55,23 @@ async function toggleSeason(headEl) {
   const seasonNum = item.dataset.season;
   if (panel.dataset.loaded === '1') return;
 
-  panel.innerHTML = `<div class="loading">불러오는 중...</div>`;
+  panel.innerHTML = `<div class="loading">กำลังโหลด...</div>`;
   try {
     const res = await fetch(`/api/season/${tvId}/${seasonNum}`);
     const data = await res.json();
     panel.innerHTML = (data.episodes || []).map(ep => `
-      <div class="episode-row">
+      <a href="/watch/${tvId}/${seasonNum}/${ep.number}" class="episode-row" style="text-decoration:none;color:inherit;display:flex;gap:15px;align-items:center;">
         <img src="${ep.still}" alt="${ep.name || ''}">
         <div>
           <div class="ep-num">EP ${ep.number}</div>
           <div class="ep-title">${ep.name || ''}</div>
-          <div class="ep-meta">${ep.airDate || '방영일 미상'} · ★ ${ep.rating}</div>
-          <div class="ep-overview">${ep.overview || '등록된 소개가 없습니다.'}</div>
+          <div class="ep-meta">${ep.airDate || 'ไม่ทราบวันที่'} · ★ ${ep.rating}</div>
+          <div class="ep-overview">${ep.overview || 'ไม่มีเรื่องย่อ'}</div>
         </div>
-      </div>
-    `).join('') || `<div class="empty">에피소드 정보가 없습니다.</div>`;
+      </a>
+    `).join('') || `<div class="empty">ไม่พบข้อมูลตอน</div>`;
     panel.dataset.loaded = '1';
   } catch (e) {
-    panel.innerHTML = `<div class="empty">에피소드를 불러오지 못했습니다.</div>`;
+    panel.innerHTML = `<div class="empty">ไม่สามารถโหลดข้อมูลตอนได้</div>`;
   }
 }
