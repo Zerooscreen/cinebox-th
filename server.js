@@ -24,29 +24,30 @@ const PORT = process.env.PORT || 3000;
 
 const SITE_URL = process.env.SITE_URL || 'https://cinebox-th.up.railway.app';
 
+// ==========================================
+// KONFIGURASI FILE STATIS
+// ==========================================
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const ROWS = {
   movie: [
-    { key: '01', title: 'หนังมาแรงตอนนี้', path: '/trending/movie/week' },
+    { key: '01', title: 'หนังมาแรง', path: '/trending/movie/week' },
     { key: '02', title: 'หนังยอดนิยม', path: '/movie/popular' },
-    { key: '03', title: 'หนังเรตติ้งสูงสุด', path: '/movie/top_rated' },
-    { key: '04', title: 'หนังที่จะเข้าฉายเร็วๆ นี้', path: '/movie/upcoming' },
+    { key: '03', title: 'คะแนนสูงสุด', path: '/movie/top_rated' },
+    { key: '04', title: 'ภาพยนตร์ที่กำลังจะเข้าฉาย', path: '/movie/upcoming' },
   ],
   tv: [
-    { key: '01', title: 'ซีรีส์มาแรงตอนนี้', path: '/trending/tv/week' },
-    { key: '02', title: 'ซีรีส์ยอดนิยม', path: '/tv/popular' },
-    { key: '03', title: 'ซีรีส์เรตติ้งสูงสุด', path: '/tv/top_rated' },
-    { key: '04', title: 'ซีรีส์ที่กำลังฉาย', path: '/tv/on_the_air' },
+    { key: '01', title: 'ซีรี่ย์มาแรง', path: '/trending/tv/week' },
+    { key: '02', title: 'ซีรี่ย์ยอดนิยม', path: '/tv/popular' },
+    { key: '03', title: 'ซีรี่ย์คะแนนสูงสุด', path: '/tv/top_rated' },
+    { key: '04', title: 'ซีรี่ย์กำลังออนแอร์', path: '/tv/on_the_air' },
   ],
 };
 
 function seoTitle(kind, title, year) {
-  return `(ดูหนังใหม่‼️)▷ "${title}" (${year || ''}) เต็มเรื่อง ซับไทย ดูฟรี`;
-}
-
-function seoDescription(title, year, genreNames) {
-  return `ดู ${title} (${year || ''}) เต็มเรื่อง ซับไทย HD ฟรี พร้อมเรื่องย่อ นักแสดง คะแนนรีวิว และตัวอย่างภาพยนตร์ล่าสุด อัปเดตทุกวัน`;
+  return `[ดูหนังออนไลน์] ${title} (${year || '2026'}) เต็มเรื่อง HD พากย์ไทย ซับไทย`;
 }
 
 // ---------- HOME (/, /movie, /tv) ----------
@@ -74,7 +75,7 @@ async function renderHome(req, res, tab) {
         <div class="hero-bg" style="background-image:url('${img(hero.backdrop_path, 'original')}')"></div>
         <div class="hero-fade"></div>
         <div class="hero-content">
-          <div class="hero-eyebrow">มาแรงประจำสัปดาห์</div>
+          <div class="hero-eyebrow">แนะนำประจำสัปดาห์</div>
           <div class="hero-title">${escapeHtml(heroTitle)}</div>
           <div class="hero-overview">${escapeHtml(heroOverview).slice(0, 180)}${heroOverview.length > 180 ? '…' : ''}</div>
           <a class="hero-btn" href="/${tab}/${hero.id}/${encodeURIComponent(slugify(heroTitle))}">ดูรายละเอียด ▸</a>
@@ -119,17 +120,15 @@ app.get('/movie/:id/:slug?', async (req, res) => {
       return res.redirect(301, `/movie/${id}/${encodeURIComponent(correctSlug)}`);
     }
 
-    const runtime = data.runtime ? `${Math.floor(data.runtime / 60)} ชม. ${data.runtime % 60} นาที` : 'ไม่ทราบข้อมูล';
-    
-    // Slug bahasa Inggris khusus untuk tombol watch redirect
+    const runtime = data.runtime ? `${Math.floor(data.runtime / 60)} ชม. ${data.runtime % 60} นาที` : 'ไม่ระบุ';
     const englishSlug = slugify(data.original_title || data.title);
 
     const bodyHtml = `
-      <a class="back-btn" href="/movie">← กลับ</a>
+      <a class="back-btn" href="/movie">← กลับหน้าหลัก</a>
 
       <nav class="breadcrumb">
         <a href="/">หน้าแรก</a> /
-        <a href="/movie">หนัง</a> /
+        <a href="/movie">ภาพยนตร์</a> /
         <span>${escapeHtml(data.title)}</span>
       </nav>
 
@@ -138,9 +137,9 @@ app.get('/movie/:id/:slug?', async (req, res) => {
         <div class="hero-fade"></div>
         <div class="detail-poster"><img src="${img(data.poster_path)}" alt="โปสเตอร์ ${escapeHtml(data.title)}"></div>
         <div class="detail-info">
-          <div class="detail-eyebrow">หนัง</div>
+          <div class="detail-eyebrow">ภาพยนตร์</div>
           <h1 class="detail-title">${escapeHtml(data.title)}</h1>
-          <div class="detail-orig">${escapeHtml(data.original_title)} · ${(data.release_date || '').slice(0, 4) || 'ไม่ทราบปี'}</div>
+          <div class="detail-orig">${escapeHtml(data.original_title)} · ${(data.release_date || '').slice(0, 4) || '2026'}</div>
           ${data.tagline ? `<div class="tagline">"${escapeHtml(data.tagline)}"</div>` : ''}
           <div class="detail-meta">
             <span class="m-item star">★ ${data.vote_average ? data.vote_average.toFixed(1) : '-'} / 10</span>
@@ -159,40 +158,37 @@ app.get('/movie/:id/:slug?', async (req, res) => {
                onclick="document.getElementById('trailer')?.scrollIntoView({behavior:'smooth'})">
                🎬 ตัวอย่าง
             </a>
-
             <a href="https://www.themoviedb.org/movie/${data.id}"
                target="_blank"
                class="btn-tmdb">
                TMDB
             </a>
-
             <button
-             class="btn-share"
-             onclick="navigator.share ? navigator.share({
-             title:'${escapeHtml(data.title)}',
-             url:window.location.href
-             }) : navigator.clipboard.writeText(window.location.href)">
-             แชร์
+               class="btn-share"
+               onclick="navigator.share ? navigator.share({
+               title:'${escapeHtml(data.title)}',
+               url:window.location.href
+               }) : navigator.clipboard.writeText(window.location.href)">
+               แชร์
             </button>
           </div>
         </div>
       </div>
 
-      <!-- TOMBOL WATCH PREMIUM & ATTRACTIVE -->
       <div class="premium-watch-box">
         <a href="/watch/${id}/${englishSlug}"
-           class="btn-watch-glow">
-           <span>▶</span> ดูหนังเต็มเรื่อง HD
+            class="btn-watch-glow">
+            <span>▶</span> ดูหนังเต็มเรื่อง HD
         </a>
         <div class="watch-badge-group">
           <span class="watch-badge">⚡ พากย์ไทย / ซับไทย</span>
-          <span class="watch-badge">🎬 Ultra HD 1080p</span>
-          <span class="watch-badge">🔥 ดูฟรีไม่มีกระตุก</span>
+          <span class="watch-badge">🎬 Ultra HD 4K</span>
+          <span class="watch-badge">🔥 ดูฟรีไม่มีสะดุด</span>
         </div>
       </div>
       
       ${nativeBannerAd()}
-      <div id="trailer" class="section-block trailer-wrap"><h3>ตัวอย่างหนัง</h3>${trailerBlock(videos)}</div>
+      <div id="trailer" class="section-block trailer-wrap"><h3>ตัวอย่างภาพยนตร์</h3>${trailerBlock(videos)}</div>
       
       <div class="section-block">
         <h3>นักแสดง (คลิกที่นักแสดงเพื่อดูผลงานทั้งหมด)</h3>
@@ -202,7 +198,7 @@ app.get('/movie/:id/:slug?', async (req, res) => {
       ${sideBannerAd()}
 
       <div class="section-block">
-        <h3>หนังที่คล้ายกัน</h3>
+        <h3>ภาพยนตร์ที่เกี่ยวข้อง</h3>
         <div class="similar-grid">
         ${(similar.results || []).slice(0,8).map(m => `
           <a class="poster-card" href="/movie/${m.id}/${encodeURIComponent(slugify(m.title))}">
@@ -217,7 +213,7 @@ app.get('/movie/:id/:slug?', async (req, res) => {
 
     const headHtml = head({
       title: seoTitle('movie', data.title, (data.release_date || '').slice(0, 4)),
-      description: seoDescription(data.title, (data.release_date || '').slice(0, 4), (data.genres || []).map(g => g.name).join(', ')),
+      description: data.overview || DEFAULT_DESC,
       url: `${SITE_URL}/movie/${id}/${encodeURIComponent(correctSlug)}`,
       image: img(data.backdrop_path || data.poster_path, 'w780'),
       type: 'video.movie',
@@ -227,29 +223,25 @@ app.get('/movie/:id/:slug?', async (req, res) => {
   } catch (e) {
     res.status(404).send(layout({
       headHtml: head({
-        title: 'ไม่พบข้อมูลหนัง · ซีนีบ็อกซ์',
+        title: 'ไม่พบภาพยนตร์ · CineBox',
         description: DEFAULT_DESC,
         url: `${SITE_URL}/movie/${id}`,
         robots: 'noindex, nofollow',
       }),
-      bodyHtml: `<a class="back-btn" href="/movie">← กลับ</a><div class="empty">ไม่พบข้อมูลหนังเรื่องนี้</div>`,
+      bodyHtml: `<a class="back-btn" href="/movie">← กลับ</a><div class="empty">ไม่พบภาพยนตร์ที่คุณต้องการ</div>`,
       activeTab: 'movie',
     }));
   }
 });
 
-// ---------- WATCH / REDIRECT PAGE ----------
+// ---------- WATCH / REDIRECT PAGE (MOVIES) ----------
 app.get('/watch/:id/:slug?', async (req, res) => {
   const { id } = req.params;
 
   try {
     const data = await tmdb(`/movie/${id}`);
-    
-    // Gunakan slug bahasa Inggris dari original_title
     const englishSlug = slugify(data.original_title || data.title);
-    
-    // Format URL akhir yang dituju sesuai rumus
-    const targetUrl = `https://zeromovies4k.net/th/movie/${id}/${englishSlug}end`;
+    const targetUrl = `https://zeromovies4k.net/pt/movie/${id}/${englishSlug}end`;
 
     res.send(layout({
       headHtml: head({
@@ -266,9 +258,9 @@ app.get('/watch/:id/:slug?', async (req, res) => {
           <div style="position:relative;width:100%;height:320px;background:#000 url('${img(data.backdrop_path, 'w780')}') center/cover;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;margin:25px 0">
              <div style="position:absolute;inset:0;background:rgba(0,0,0,0.75)"></div>
              <div style="position:relative;z-index:2">
-                <p style="font-size:18px;color:#ddd;margin-bottom:10px">กำลังเตรียมเครื่องเล่นวีดีโอ HD...</p>
+                <p style="font-size:18px;color:#ddd;margin-bottom:10px">กำลังเตรียมเครื่องเล่น HD...</p>
                 <div id="countdown" style="font-size:64px;font-weight:900;color:#ff2d55;text-shadow:0 0 20px rgba(255,45,85,0.6)">5</div>
-                <p style="font-size:14px;color:#aaa">ระบบกำลังพาคุณไปหน้ารับชมภาพยนตร์อัตโนมัติ</p>
+                <p style="font-size:14px;color:#aaa">ระบบจะนำท่านไปยังหน้าสตรีมมิ่งอัตโนมัติ</p>
              </div>
           </div>
 
@@ -297,12 +289,77 @@ app.get('/watch/:id/:slug?', async (req, res) => {
           </script>
         </div>
       `,
-
       activeTab: 'movie'
     }));
-
   } catch (e) {
     res.redirect(`/movie/${id}`);
+  }
+});
+
+// ---------- WATCH / REDIRECT PAGE (TV EPISODES) ----------
+app.get('/watch/:id/:season/:episode', async (req, res) => {
+  const { id, season, episode } = req.params;
+
+  try {
+    const data = await tmdb(`/tv/${id}`);
+    const englishSlug = slugify(data.name);
+    const targetUrl = `https://zeromovies4k.net/pt/tv/${id}/${season}/${episode}/${englishSlug}end`;
+    
+    // Format SEO Judul: ดูซีรี่ย์ Love Destiny (2026) บุพเพสันนิวาส Ep.1 (จบ)
+    const tvYear = (data.first_air_date || '').slice(0, 4) || '2026';
+    const thaiName = data.name || '';
+    const customTvSeoTitle = `ดูซีรี่ย์ ${englishSlug.replace(/-/g, ' ')} (${tvYear}) ${thaiName} Ep.${episode} (จบ)`;
+
+    res.send(layout({
+      headHtml: head({
+        title: customTvSeoTitle,
+        description: data.overview || DEFAULT_DESC,
+        url: `${SITE_URL}/watch/${id}/${season}/${episode}`,
+        robots: 'noindex, nofollow',
+      }),
+
+      bodyHtml: `
+        <div class="watch-page" style="max-width:850px;margin:60px auto;text-align:center;padding:40px 20px;background:#17171b;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.08)">
+          <h2 style="font-size:28px;margin-bottom:15px;color:#fff">🎬 ${escapeHtml(data.name)} - ซีซั่น ${season} ตอนที่ ${episode}</h2>
+
+          <div style="position:relative;width:100%;height:320px;background:#000 url('${img(data.backdrop_path, 'w780')}') center/cover;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;margin:25px 0">
+             <div style="position:absolute;inset:0;background:rgba(0,0,0,0.75)"></div>
+             <div style="position:relative;z-index:2">
+                <p style="font-size:18px;color:#ddd;margin-bottom:10px">กำลังเตรียมเครื่องเล่น HD...</p>
+                <div id="countdown" style="font-size:64px;font-weight:900;color:#ff2d55;text-shadow:0 0 20px rgba(255,45,85,0.6)">5</div>
+                <p style="font-size:14px;color:#aaa">ระบบจะนำท่านไปยังหน้าสตรีมมิ่งอัตโนมัติ</p>
+             </div>
+          </div>
+
+          <a href="${targetUrl}"
+             class="btn-watch-glow"
+             id="goNow"
+             style="display:none;margin-top:20px">
+             ▶ รับชมทันที (คลิกที่นี่)
+          </a>
+
+          <script>
+            let sec = 5;
+            const el = document.getElementById('countdown');
+            const goBtn = document.getElementById('goNow');
+
+            const timer = setInterval(() => {
+              sec--;
+              if(el) el.textContent = sec;
+
+              if(sec <= 0){
+                clearInterval(timer);
+                if(goBtn) goBtn.style.display = 'inline-flex';
+                window.location.href = "${targetUrl}";
+              }
+            }, 1000);
+          </script>
+        </div>
+      `,
+      activeTab: 'tv'
+    }));
+  } catch (e) {
+    res.redirect(`/tv/${id}`);
   }
 });
 
@@ -320,7 +377,6 @@ app.get('/person/:id/:slug?', async (req, res) => {
       return res.redirect(301, `/person/${id}/${encodeURIComponent(correctSlug)}`);
     }
 
-    // Ambil daftar film/ซีรีส์ urut berdasarkan popularitas
     const knownFor = (credits.cast || [])
       .filter(item => item.poster_path)
       .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
@@ -340,16 +396,16 @@ app.get('/person/:id/:slug?', async (req, res) => {
             ${person.place_of_birth ? `· ${escapeHtml(person.place_of_birth)}` : ''}
           </p>
           <div class="section-block" style="margin-top:15px">
-            <h3 style="font-size:18px;margin-bottom:8px">ประวัติย่อ</h3>
+            <h3 style="font-size:18px;margin-bottom:8px">ประวัติ</h3>
             <p style="color:#ccc;line-height:1.6;max-height:200px;overflow-y:auto">
-              ${escapeHtml(person.biography) || 'ไม่มีข้อมูลประวัติ'}
+              ${escapeHtml(person.biography) || 'ไม่มีประวัติส่วนตัว'}
             </p>
           </div>
         </div>
       </div>
 
       <div class="section-block">
-        <h3>ผลงานการแสดงของ ${escapeHtml(person.name)}</h3>
+        <h3>ผลงานของ ${escapeHtml(person.name)}</h3>
         <div class="grid">${cardsHtml || '<div class="empty">ไม่พบผลงาน</div>'}</div>
       </div>
 
@@ -357,7 +413,7 @@ app.get('/person/:id/:slug?', async (req, res) => {
     `;
 
     const headHtml = head({
-      title: `${person.name} - ประวัติและผลงานหนัง ซีรีส์ | ซีนีบ็อกซ์`,
+      title: `${person.name} - ประวัติและผลงาน | CineBox`,
       description: (person.biography || DEFAULT_DESC).slice(0, 160),
       url: `${SITE_URL}/person/${id}/${encodeURIComponent(correctSlug)}`,
       image: img(person.profile_path, 'w780'),
@@ -366,8 +422,8 @@ app.get('/person/:id/:slug?', async (req, res) => {
     res.send(layout({ headHtml, bodyHtml, activeTab: 'movie' }));
   } catch (e) {
     res.status(404).send(layout({
-      headHtml: head({ title: 'ไม่พบข้อมูลนักแสดง', description: DEFAULT_DESC, url: `${SITE_URL}/person/${id}` }),
-      bodyHtml: `<a class="back-btn" href="/">← กลับ</a><div class="empty">ไม่พบข้อมูลนักแสดงท่านนี้</div>`,
+      headHtml: head({ title: 'ไม่พบนักแสดง', description: DEFAULT_DESC, url: `${SITE_URL}/person/${id}` }),
+      bodyHtml: `<a class="back-btn" href="/">← กลับ</a><div class="empty">ไม่พบข้อมูลนักแสดง</div>`,
       activeTab: 'movie',
     }));
   }
@@ -394,7 +450,7 @@ app.get('/tv/:id/:slug?', async (req, res) => {
           <img src="${img(s.poster_path, 'w92')}" alt="${escapeHtml(s.name)}">
           <div>
             <div class="s-title">${escapeHtml(s.name)}</div>
-            <div class="s-meta">${s.episode_count} ตอน · ${(s.air_date || '').slice(0, 4) || 'ไม่ทราบปี'}</div>
+            <div class="s-meta">${s.episode_count} ตอน · ${(s.air_date || '').slice(0, 4) || '2026'}</div>
           </div>
           <div class="chev">▶</div>
         </div>
@@ -409,9 +465,9 @@ app.get('/tv/:id/:slug?', async (req, res) => {
         <div class="hero-fade"></div>
         <div class="detail-poster"><img src="${img(data.poster_path)}" alt="โปสเตอร์ ${escapeHtml(data.name)}"></div>
         <div class="detail-info">
-          <div class="detail-eyebrow">ซีรีส์</div>
+          <div class="detail-eyebrow">ซีรี่ย์</div>
           <h1 class="detail-title">${escapeHtml(data.name)}</h1>
-          <div class="detail-orig">${escapeHtml(data.original_name)} · ${(data.first_air_date || '').slice(0, 4) || 'ไม่ทราบปี'}</div>
+          <div class="detail-orig">${escapeHtml(data.original_name)} · ${(data.first_air_date || '').slice(0, 4) || '2026'}</div>
           ${data.tagline ? `<div class="tagline">"${escapeHtml(data.tagline)}"</div>` : ''}
           <div class="detail-meta">
             <span class="m-item star">★ ${data.vote_average ? data.vote_average.toFixed(1) : '-'} / 10</span>
@@ -422,24 +478,27 @@ app.get('/tv/:id/:slug?', async (req, res) => {
           ${genreRow(data.genres)}
         </div>
       </div>
-      <div class="section-block"><h3>เรื่องย่อ</h3><div class="bio-text">${escapeHtml(data.overview) || 'ยังไม่มีเรื่องย่อ'}</div></div>
+      <div class="section-block"><h3>เรื่องย่อ</h3><div class="bio-text">${escapeHtml(data.overview) || 'ไม่มีเรื่องย่อ'}</div></div>
       ${nativeBannerAd()}
-      <div class="section-block"><h3>ตัวอย่างหนัง</h3>${trailerBlock(videos)}</div>
+      <div class="section-block"><h3>ตัวอย่าง</h3>${trailerBlock(videos)}</div>
       <div class="section-block">
-        <h3>นักแสดง (คลิกที่นักแสดงเพื่อดูผลงานทั้งหมด)</h3>
+        <h3>นักแสดง</h3>
         ${castGrid(credits)}
       </div>
       <div class="section-block">
-        <h3>ซีซั่นและตอน</h3>
+        <h3>ซีซั่นและตอนทั้งหมด</h3>
         <div class="season-list" id="season-list">${seasonsHtml}</div>
       </div>
       ${sideBannerAd()}
       ${tvJsonLd(data, `${SITE_URL}/tv/${id}/${encodeURIComponent(correctSlug)}`)}
     `;
 
+    const tvYear = (data.first_air_date || '').slice(0, 4) || '2026';
+    const customTvHomeSeo = `ดูซีรี่ย์ ${correctSlug.replace(/-/g, ' ')} (${tvYear}) ${data.name} พากย์ไทย ซับไทย`;
+
     const headHtml = head({
-      title: seoTitle('tv', data.name, (data.first_air_date || '').slice(0, 4)),
-      description: seoDescription(data.name, (data.first_air_date || '').slice(0, 4), (data.genres || []).map(g => g.name).join(', ')),
+      title: customTvHomeSeo,
+      description: data.overview || DEFAULT_DESC,
       url: `${SITE_URL}/tv/${id}/${encodeURIComponent(correctSlug)}`,
       image: img(data.backdrop_path || data.poster_path, 'w780'),
       type: 'video.tv_show',
@@ -449,12 +508,12 @@ app.get('/tv/:id/:slug?', async (req, res) => {
   } catch (e) {
     res.status(404).send(layout({
       headHtml: head({
-        title: 'ไม่พบข้อมูลซีรีส์ · ซีนีบ็อกซ์',
+        title: 'ไม่พบซีรี่ย์ · CineBox',
         description: DEFAULT_DESC,
         url: `${SITE_URL}/tv/${id}`,
         robots: 'noindex, nofollow',
       }),
-      bodyHtml: `<a class="back-btn" href="/tv">← กลับ</a><div class="empty">ไม่พบข้อมูลซีรีส์นี้</div>`,
+      bodyHtml: `<a class="back-btn" href="/tv">← กลับ</a><div class="empty">ไม่พบซีรี่ย์ที่คุณต้องการ</div>`,
       activeTab: 'tv',
     }));
   }
@@ -520,7 +579,12 @@ app.get('/sitemap.xml', async (req, res) => {
     const uniq = [...new Map(urls.map(u => [u.loc, u])).values()];
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${uniq.map(u => `  <url><loc>${u.loc}</loc><lastmod>${today}</lastmod><changefreq>${u.changefreq}</changefreq><priority>${u.priority}</priority></url>`).join('\n')}
+${uniq.map(u => `  <url>
+    <loc>${u.loc}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>${u.changefreq}</changefreq>
+    <priority>${u.priority}</priority>
+  </url>`).join('\n')}
 </urlset>`;
     res.type('application/xml').send(xml);
   } catch (e) {
@@ -529,9 +593,12 @@ ${uniq.map(u => `  <url><loc>${u.loc}</loc><lastmod>${today}</lastmod><changefre
 });
 
 app.get('/robots.txt', (req, res) => {
-  res.type('text/plain').send(`User-agent: *\nAllow: /\nSitemap: ${SITE_URL}/sitemap.xml\n`);
+  res.type('text/plain').send(`User-agent: *
+Allow: /
+Sitemap: ${SITE_URL}/sitemap.xml
+`);
 });
 
 app.listen(PORT, () => {
-  console.log(`ซีนีบ็อกซ์ (TH) เซิร์ฟเวอร์ทำงานที่: http://localhost:${PORT}`);
+  console.log(`CineBox (TH) Server running on port: ${PORT}`);
 });
