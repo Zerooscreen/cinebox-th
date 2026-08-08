@@ -4,7 +4,6 @@ const { tmdb, img, slugify } = require('./lib/tmdb');
 const { head, layout, posterCard, genreRow, watchButtonBlock, trailerBlock, castGrid, similarGrid, escapeHtml, movieJsonLd, tvJsonLd, personJsonLd, banner728x90, banner468x60, nativeBannerAd, detailTitle, DEFAULT_TITLE, DEFAULT_DESC, SITE_NAME } = require('./lib/render');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 const SITE_URL = process.env.SITE_URL || 'https://www.cinemath.duckdns.org';
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -35,20 +34,24 @@ function seoDescription(title, year, genreNames) {
 async function renderHome(req, res, tab) {
   try {
     const heroData = await tmdb(tab === 'movie' ? '/trending/movie/week' : '/trending/tv/week');
-    const hero = heroData.results[0];
+    const hero = heroData && heroData.results ? heroData.results[0] : null;
     const heroTitle = hero ? (hero.title || hero.name) : SITE_NAME;
     const heroOverview = hero ? (hero.overview || '') : '';
 
     const rowsHtml = [];
     for (const def of ROWS[tab]) {
-      const data = await tmdb(def.path);
-      const cards = data.results.slice(0, 12).map(item => posterCard(item, tab)).join('');
-      rowsHtml.push(`
-        <section class="row">
-          <div class="row-head"><span class="row-num">${def.key}</span><h2>${def.title}</h2></div>
-          <div class="grid">${cards}</div>
-        </section>
-      `);
+      try {
+        const data = await tmdb(def.path);
+        const cards = (data && data.results ? data.results : []).slice(0, 12).map(item => posterCard(item, tab)).join('');
+        rowsHtml.push(`
+          <section class="row">
+            <div class="row-head"><span class="row-num">${def.key}</span><h2>${def.title}</h2></div>
+            <div class="grid">${cards}</div>
+          </section>
+        `);
+      } catch (err) {
+        console.error(`Error loading row ${def.path}:`, err.message);
+      }
     }
 
     const heroHtml = hero ? `
@@ -73,9 +76,10 @@ async function renderHome(req, res, tab) {
 
     res.send(layout({ headHtml, bodyHtml, activeTab: tab }));
   } catch (e) {
+    console.error('RenderHome Error:', e.message);
     res.status(500).send(layout({
       headHtml: head({ title: DEFAULT_TITLE, description: DEFAULT_DESC, url: `${SITE_URL}/${tab}` }),
-      bodyHtml: `<div class="empty">ไม่สามารถโหลดข้อมูลได้ โปรดลองอีกครั้งในภายหลัง</div>`,
+      bodyHtml: `<div class="empty">ไม่สามารถโหลดข้อมูลได้ โปรดตรวจสอบ TMDB_API_KEY Anda di Vercel. (${escapeHtml(e.message)})</div>`,
       activeTab: tab,
     }));
   }
@@ -284,7 +288,7 @@ app.get('/api/search', async (req, res) => {
     const q = req.query.q || '';
     if (!q.trim()) return res.json({ results: [] });
     const data = await tmdb('/search/multi', { query: q });
-    const results = data.results
+    const results = (data && data.results ? data.results : [])
       .filter(r => r.media_type === 'movie' || r.media_type === 'tv')
       .slice(0, 8)
       .map(r => ({
@@ -305,7 +309,7 @@ app.get('/api/season/:tvId/:seasonNumber', async (req, res) => {
   try {
     const { tvId, seasonNumber } = req.params;
     const data = await tmdb(`/tv/${tvId}/season/${seasonNumber}`);
-    const episodes = (data.episodes || []).map(ep => ({
+    const episodes = (data && data.episodes ? data.episodes : []).map(ep => ({
       number: ep.episode_number,
       name: ep.name,
       airDate: ep.air_date,
@@ -328,7 +332,7 @@ app.get('/sitemap.xml', async (req, res) => {
       tmdb('/tv/top_rated').catch(() => ({ results: [] })),
     ]);
 
-    const movieCreditsPromises = (mp.results || []).slice(0, 5).reverse().map(m => tmdb(`/movie/${m.id}/credits`).catch(() => ({ cast: [] })));
+    const movieCreditsPromises = (mp && mp.results ? mp.results : []).slice(0, 5).reverse().map(m => tmdb(`/movie/${m.id}/credits`).catch(() => ({ cast: [] })));
     const creditsResults = await Promise.all(movieCreditsPromises);
     const actors = [];
     creditsResults.forEach(c => {
@@ -341,8 +345,8 @@ app.get('/sitemap.xml', async (req, res) => {
     const urls = [
       { loc: `${SITE_URL}/movie`, priority: '1.0', changefreq: 'daily' },
       { loc: `${SITE_URL}/tv`, priority: '1.0', changefreq: 'daily' },
-      ...[...(mp.results || []), ...(mt.results || [])].map(m => ({ loc: `${SITE_URL}/movie/${m.id}/${encodeURIComponent(slugify(m.title) || 'film')}`, priority: '0.7', changefreq: 'weekly' })),
-      ...[...(tp.results || []), ...(tt.results || [])].map(t => ({ loc: `${SITE_URL}/tv/${t.id}/${encodeURIComponent(slugify(t.name) || 'serial')}`, priority: '0.7', changefreq: 'weekly' })),
+      ...[...(mp && mp.results ? mp.results : []), ...(mt && mt.results ? mt.results : [])].map(m => ({ loc: `${SITE_URL}/movie/${m.id}/${encodeURIComponent(slugify(m.title) || 'film')}`, priority: '0.7', changefreq: 'weekly' })),
+      ...[...(tp && tp.results ? tp.results : []), ...(tt && tt.results ? tt.results : [])].map(t => ({ loc: `${SITE_URL}/tv/${t.id}/${encodeURIComponent(slugify(t.name) || 'serial')}`, priority: '0.7', changefreq: 'weekly' })),
       ...actors.map(a => ({ loc: `${SITE_URL}/person/${a.id}/${encodeURIComponent(slugify(a.name) || 'actor')}`, priority: '0.5', changefreq: 'weekly' })),
     ];
 
