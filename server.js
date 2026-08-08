@@ -22,7 +22,8 @@ const {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const SITE_URL = process.env.SITE_URL || 'https://www.cinemath.duckdns.org';
+// URL tanpa www
+const SITE_URL = process.env.SITE_URL || 'https://cinemath.duckdns.org';
 
 // ==========================================
 // KONFIGURASI FILE STATIS
@@ -610,5 +611,5 @@ Sitemap: ${SITE_URL}/sitemap.xml
 });
 
 app.listen(PORT, () => {
-  console.log(`CineBox (TH) Server running on port: ${PORT}`);
+  console.log(`CineBox (TH) Server running on: ${SITE_URL}`);
 });
