@@ -5,7 +5,7 @@ const { head, layout, posterCard, genreRow, watchButtonBlock, trailerBlock, cast
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const SITE_URL = process.env.SITE_URL || 'https://cinemath.duckdns.org';
+const SITE_URL = process.env.SITE_URL || 'https://www.cinemath.duckdns.org';
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
