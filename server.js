@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 const { tmdb, img, slugify } = require('./lib/tmdb');
-const { head, layout, posterCard, genreRow, watchButtonBlock, trailerBlock, castGrid, similarGrid, escapeHtml, movieJsonLd, tvJsonLd, banner728x90, banner468x60, nativeBannerAd, detailTitle, DEFAULT_TITLE, DEFAULT_DESC, SITE_NAME } = require('./lib/render');
+const { head, layout, posterCard, genreRow, watchButtonBlock, trailerBlock, castGrid, similarGrid, escapeHtml, movieJsonLd, tvJsonLd, personJsonLd, banner728x90, banner468x60, nativeBannerAd, detailTitle, DEFAULT_TITLE, DEFAULT_DESC, SITE_NAME } = require('./lib/render');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,20 +16,20 @@ const ROWS = {
     { key: '01', title: 'หนังมาแรง', path: '/trending/movie/week' },
     { key: '02', title: 'หนังยอดนิยม', path: '/movie/popular' },
     { key: '03', title: 'คะแนนสูงสุด', path: '/movie/top_rated' },
-    { key: '04', title: 'ภาพยนตร์ที่กำลังจะเข้าฉาย', path: '/movie/upcoming' },
+    { key: '04', title: 'เร็วๆ นี้ในโรงภาพยนตร์', path: '/movie/upcoming' },
   ],
   tv: [
-    { key: '01', title: 'ซีรี่ย์มาแรง', path: '/trending/tv/week' },
-    { key: '02', title: 'ซีรี่ย์ยอดนิยม', path: '/tv/popular' },
-    { key: '03', title: 'ซีรี่ย์คะแนนสูงสุด', path: '/tv/top_rated' },
-    { key: '04', title: 'ซีรี่ย์กำลังออนแอร์', path: '/tv/on_the_air' },
+    { key: '01', title: 'ซีรีส์มาแรง', path: '/trending/tv/week' },
+    { key: '02', title: 'ซีรีส์ยอดนิยม', path: '/tv/popular' },
+    { key: '03', title: 'ซีรีส์คะแนนสูงสุด', path: '/tv/top_rated' },
+    { key: '04', title: 'ซีรีส์ที่กำลังฉาย', path: '/tv/on_the_air' },
   ],
 };
 
 function seoDescription(title, year, genreNames) {
-  const yearPart = year ? `ปี ${year}, ` : '';
-  const genrePart = genreNames ? `หมวดหมู่ ${genreNames}, ` : '';
-  return `เรื่องย่อ นักแสดง คะแนนรีวิว และตัวอย่างภาพยนตร์ของ ${title}. ${genrePart}${yearPart}รวมข้อมูลครบจบในที่เดียว`;
+  const yearPart = year ? `${year}, ` : '';
+  const genrePart = genreNames ? `ประเภท ${genreNames}, ` : '';
+  return `เรื่องย่อ นักแสดง เรตติ้ง และตัวอย่างอย่างเป็นทางการของ ${title} ${genrePart}${yearPart}ข้อมูลทั้งหมดในที่เดียว`;
 }
 
 async function renderHome(req, res, tab) {
@@ -56,7 +56,7 @@ async function renderHome(req, res, tab) {
         <div class="hero-bg" style="background-image:url('${img(hero.backdrop_path, 'original')}')"></div>
         <div class="hero-fade"></div>
         <div class="hero-content">
-          <div class="hero-eyebrow">แนะนำประจำสัปดาห์</div>
+          <div class="hero-eyebrow">มาแรงประจำสัปดาห์</div>
           <div class="hero-title">${escapeHtml(heroTitle)}</div>
           <div class="hero-overview">${escapeHtml(heroOverview).slice(0, 180)}${heroOverview.length > 180 ? '…' : ''}</div>
           <a class="hero-btn" href="/${tab}/${hero.id}/${encodeURIComponent(slugify(heroTitle) || 'film')}">ดูเพิ่มเติม ▸</a>
@@ -75,7 +75,7 @@ async function renderHome(req, res, tab) {
   } catch (e) {
     res.status(500).send(layout({
       headHtml: head({ title: DEFAULT_TITLE, description: DEFAULT_DESC, url: `${SITE_URL}/${tab}` }),
-      bodyHtml: `<div class="empty">ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่อีกครั้งในภายหลัง</div>`,
+      bodyHtml: `<div class="empty">ไม่สามารถโหลดข้อมูลได้ โปรดลองอีกครั้งในภายหลัง</div>`,
       activeTab: tab,
     }));
   }
@@ -88,16 +88,14 @@ app.get('/tv', (req, res) => renderHome(req, res, 'tv'));
 app.get('/movie/:id/:slug?', async (req, res) => {
   const { id } = req.params;
   try {
-    const [data, credits, videos, similar] = await Promise.all([
-      tmdb(`/movie/${id}`),
-      tmdb(`/movie/${id}/credits`),
-      tmdb(`/movie/${id}/videos`),
-      tmdb(`/movie/${id}/similar`),
+    const data = await tmdb(`/movie/${id}`);
+    const [credits, videos, similar] = await Promise.all([
+      tmdb(`/movie/${id}/credits`).catch(() => ({ cast: [], crew: [] })),
+      tmdb(`/movie/${id}/videos`).catch(() => ({ results: [] })),
+      tmdb(`/movie/${id}/similar`).catch(() => ({ results: [] })),
     ]);
-    
-    if (!data || !data.id) throw new Error('Movie not found');
 
-    const runtime = data.runtime ? `${Math.floor(data.runtime / 60)} ชม. ${data.runtime % 60} นาที` : 'ไม่ระบุ';
+    const runtime = data.runtime ? `${Math.floor(data.runtime / 60)} ชม. ${data.runtime % 60} น.` : 'ไม่มีข้อมูล';
     const correctSlug = slugify(data.title) || 'film';
 
     const bodyHtml = `
@@ -105,11 +103,11 @@ app.get('/movie/:id/:slug?', async (req, res) => {
       <div class="detail-hero">
         <div class="hero-bg" style="background-image:url('${img(data.backdrop_path, 'original')}')"></div>
         <div class="hero-fade"></div>
-        <div class="detail-poster"><img src="${img(data.poster_path)}" alt="โปสเตอร์ของ ${escapeHtml(data.title)}"></div>
+        <div class="detail-poster"><img src="${img(data.poster_path)}" alt="โปสเตอร์ ${escapeHtml(data.title)}"></div>
         <div class="detail-info">
           <div class="detail-eyebrow">ภาพยนตร์</div>
           <h1 class="detail-title">${escapeHtml(data.title)}</h1>
-          <div class="detail-orig">${escapeHtml(data.original_title)} · ${(data.release_date || '').slice(0, 4) || 'ไม่ระบุ'}</div>
+          <div class="detail-orig">${escapeHtml(data.original_title)} · ${(data.release_date || '').slice(0, 4) || 'ไม่ทราบ'}</div>
           ${data.tagline ? `<div class="tagline">"${escapeHtml(data.tagline)}"</div>` : ''}
           <div class="detail-meta">
             <span class="m-item star">★ ${data.vote_average ? data.vote_average.toFixed(1) : '-'} / 10</span>
@@ -120,7 +118,7 @@ app.get('/movie/:id/:slug?', async (req, res) => {
           ${watchButtonBlock(data.id, data.title, 'movie')}
         </div>
       </div>
-      <div class="section-block"><h3>เรื่องย่อ</h3><div class="bio-text">${escapeHtml(data.overview) || 'ไม่มีเนื้อเรื่องย่อ'}</div></div>
+      <div class="section-block"><h3>เรื่องย่อ</h3><div class="bio-text">${escapeHtml(data.overview) || 'ไม่มีเรื่องย่อ'}</div></div>
       ${trailerBlock(videos)}
       ${banner728x90()}
       <div class="section-block"><h3>นักแสดง</h3>${castGrid(credits)}</div>
@@ -142,7 +140,7 @@ app.get('/movie/:id/:slug?', async (req, res) => {
   } catch (e) {
     res.status(404).send(layout({
       headHtml: head({ title: 'ไม่พบภาพยนตร์', description: DEFAULT_DESC, url: `${SITE_URL}/movie/${id}`, robots: 'noindex, nofollow' }),
-      bodyHtml: `<a class="back-btn" href="/movie">← กลับ</a><div class="empty">ไม่พบภาพยนตร์ที่คุณต้องการ</div>`,
+      bodyHtml: `<a class="back-btn" href="/movie">← กลับ</a><div class="empty">ไม่พบภาพยนตร์เรื่องนี้</div>`,
       activeTab: 'movie',
     }));
   }
@@ -153,9 +151,9 @@ app.get('/tv/:id/:slug?', async (req, res) => {
   try {
     const [data, credits, videos, similar] = await Promise.all([
       tmdb(`/tv/${id}`),
-      tmdb(`/tv/${id}/credits`),
-      tmdb(`/tv/${id}/videos`),
-      tmdb(`/tv/${id}/similar`),
+      tmdb(`/tv/${id}/credits`).catch(() => ({ cast: [], crew: [] })),
+      tmdb(`/tv/${id}/videos`).catch(() => ({ results: [] })),
+      tmdb(`/tv/${id}/similar`).catch(() => ({ results: [] })),
     ]);
 
     if (!data || !data.id) throw new Error('TV show not found');
@@ -168,7 +166,7 @@ app.get('/tv/:id/:slug?', async (req, res) => {
           <img src="${img(s.poster_path, 'w92')}" alt="${escapeHtml(s.name)}">
           <div>
             <div class="s-title">${escapeHtml(s.name)}</div>
-            <div class="s-meta">${s.episode_count} ตอน · ${(s.air_date || '').slice(0, 4) || 'ไม่ระบุ'}</div>
+            <div class="s-meta">${s.episode_count} ตอน · ${(s.air_date || '').slice(0, 4) || 'ไม่ทราบ'}</div>
           </div>
           <div class="chev">▶</div>
         </div>
@@ -181,11 +179,11 @@ app.get('/tv/:id/:slug?', async (req, res) => {
       <div class="detail-hero">
         <div class="hero-bg" style="background-image:url('${img(data.backdrop_path, 'original')}')"></div>
         <div class="hero-fade"></div>
-        <div class="detail-poster"><img src="${img(data.poster_path)}" alt="โปสเตอร์ของ ${escapeHtml(data.name)}"></div>
+        <div class="detail-poster"><img src="${img(data.poster_path)}" alt="โปสเตอร์ ${escapeHtml(data.name)}"></div>
         <div class="detail-info">
           <div class="detail-eyebrow">ซีรีส์</div>
           <h1 class="detail-title">${escapeHtml(data.name)}</h1>
-          <div class="detail-orig">${escapeHtml(data.original_name)} · ${(data.first_air_date || '').slice(0, 4) || 'ไม่ระบุ'}</div>
+          <div class="detail-orig">${escapeHtml(data.original_name)} · ${(data.first_air_date || '').slice(0, 4) || 'ไม่ทราบ'}</div>
           ${data.tagline ? `<div class="tagline">"${escapeHtml(data.tagline)}"</div>` : ''}
           <div class="detail-meta">
             <span class="m-item star">★ ${data.vote_average ? data.vote_average.toFixed(1) : '-'} / 10</span>
@@ -197,7 +195,7 @@ app.get('/tv/:id/:slug?', async (req, res) => {
           ${watchButtonBlock(data.id, data.name, 'tv')}
         </div>
       </div>
-      <div class="section-block"><h3>เรื่องย่อ</h3><div class="bio-text">${escapeHtml(data.overview) || 'ไม่มีเนื้อเรื่องย่อ'}</div></div>
+      <div class="section-block"><h3>เรื่องย่อ</h3><div class="bio-text">${escapeHtml(data.overview) || 'ไม่มีเรื่องย่อ'}</div></div>
       ${trailerBlock(videos)}
       ${banner728x90()}
       <div class="section-block"><h3>นักแสดง</h3>${castGrid(credits)}</div>
@@ -223,8 +221,60 @@ app.get('/tv/:id/:slug?', async (req, res) => {
   } catch (e) {
     res.status(404).send(layout({
       headHtml: head({ title: 'ไม่พบซีรีส์', description: DEFAULT_DESC, url: `${SITE_URL}/tv/${id}`, robots: 'noindex, nofollow' }),
-      bodyHtml: `<a class="back-btn" href="/tv">← กลับ</a><div class="empty">ไม่พบซีรีส์ที่คุณต้องการ</div>`,
+      bodyHtml: `<a class="back-btn" href="/tv">← กลับ</a><div class="empty">ไม่พบซีรีส์เรื่องนี้</div>`,
       activeTab: 'tv',
+    }));
+  }
+});
+
+app.get('/person/:id/:slug?', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [person, credits] = await Promise.all([
+      tmdb(`/person/${id}`),
+      tmdb(`/person/${id}/movie_credits`).catch(() => ({ cast: [] })),
+    ]);
+
+    if (!person || !person.id) throw new Error('Person not found');
+
+    const correctSlug = slugify(person.name) || 'actor';
+    const movies = (credits.cast || []).sort((a, b) => new Date(b.release_date || '1970') - new Date(a.release_date || '1970'));
+    const cards = movies.map(item => posterCard(item, 'movie')).join('');
+
+    const bodyHtml = `
+      <a class="back-btn" href="javascript:history.back()">← กลับ</a>
+      <div class="person-profile-header">
+        <img class="person-img" src="${img(person.profile_path, 'h632')}" alt="${escapeHtml(person.name)}">
+        <div class="person-details">
+          <div class="detail-eyebrow">นักแสดง</div>
+          <h1 class="detail-title">${escapeHtml(person.name)}</h1>
+          <div class="detail-meta">
+            ${person.birthday ? `<span class="m-item">วันเกิด: ${person.birthday}</span>` : ''}
+            ${person.place_of_birth ? `<span class="m-item">${escapeHtml(person.place_of_birth)}</span>` : ''}
+          </div>
+          <div class="bio-text" style="margin-top: 20px;">${escapeHtml(person.biography || 'ไม่มีประวัติส่วนตัว')}</div>
+        </div>
+      </div>
+      <div class="section-block">
+        <h3>ผลงานภาพยนตร์</h3>
+        <div class="grid">${cards || '<div class="empty">ไม่พบภาพยนตร์</div>'}</div>
+      </div>
+      ${personJsonLd(person, `${SITE_URL}/person/${id}/${encodeURIComponent(correctSlug)}`)}
+    `;
+
+    const headHtml = head({
+      title: `${person.name} - ผลงานภาพยนตร์ ประวัติ และข้อมูล`,
+      description: (person.biography || `สำรวจผลงานภาพยนตร์และประวัติของ ${person.name}`).slice(0, 160),
+      url: `${SITE_URL}/person/${id}/${encodeURIComponent(correctSlug)}`,
+      image: img(person.profile_path, 'w780'),
+    });
+
+    res.send(layout({ headHtml, bodyHtml, activeTab: 'movie' }));
+  } catch (e) {
+    res.status(404).send(layout({
+      headHtml: head({ title: 'ไม่พบข้อมูลบุคคล', description: DEFAULT_DESC, url: `${SITE_URL}/person/${id}`, robots: 'noindex, nofollow' }),
+      bodyHtml: `<a class="back-btn" href="javascript:history.back()">← กลับ</a><div class="empty">ไม่พบข้อมูลบุคคลนี้</div>`,
+      activeTab: 'movie',
     }));
   }
 });
@@ -278,12 +328,22 @@ app.get('/sitemap.xml', async (req, res) => {
       tmdb('/tv/top_rated').catch(() => ({ results: [] })),
     ]);
 
+    const movieCreditsPromises = (mp.results || []).slice(0, 5).reverse().map(m => tmdb(`/movie/${m.id}/credits`).catch(() => ({ cast: [] })));
+    const creditsResults = await Promise.all(movieCreditsPromises);
+    const actors = [];
+    creditsResults.forEach(c => {
+      if (c && c.cast) {
+        c.cast.slice(0, 5).forEach(actor => actors.push(actor));
+      }
+    });
+
     const today = new Date().toISOString().slice(0, 10);
     const urls = [
       { loc: `${SITE_URL}/movie`, priority: '1.0', changefreq: 'daily' },
       { loc: `${SITE_URL}/tv`, priority: '1.0', changefreq: 'daily' },
       ...[...(mp.results || []), ...(mt.results || [])].map(m => ({ loc: `${SITE_URL}/movie/${m.id}/${encodeURIComponent(slugify(m.title) || 'film')}`, priority: '0.7', changefreq: 'weekly' })),
       ...[...(tp.results || []), ...(tt.results || [])].map(t => ({ loc: `${SITE_URL}/tv/${t.id}/${encodeURIComponent(slugify(t.name) || 'serial')}`, priority: '0.7', changefreq: 'weekly' })),
+      ...actors.map(a => ({ loc: `${SITE_URL}/person/${a.id}/${encodeURIComponent(slugify(a.name) || 'actor')}`, priority: '0.5', changefreq: 'weekly' })),
     ];
 
     const uniq = [...new Map(urls.map(u => [u.loc, u])).values()];
@@ -302,6 +362,13 @@ app.get('/robots.txt', (req, res) => {
   res.type('text/plain').send(`User-agent: *\nAllow: /\nSitemap: ${SITE_URL}/sitemap.xml\n`);
 });
 
-app.listen(PORT, () => {
-  console.log(`Cinemath Server running on: ${SITE_URL}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+module.exports = (req, res) => {
+  return app(req, res);
+};
