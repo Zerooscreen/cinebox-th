@@ -1,15 +1,16 @@
 {
   "name": "cinebox-th",
   "version": "1.0.0",
-  "description": "CineBox Thailand - เว็บไซต์ข้อมูลหนังและซีรีส์ (ไม่ใช่บริการสตรีมมิ่ง)",
+  "description": "Cinema TH Movies & TV Shows",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
+  "dependencies": {
+    "express": "^4.19.2",
+    "node-fetch": "^2.7.0"
+  },
   "engines": {
     "node": ">=18.0.0"
-  },
-  "dependencies": {
-    "express": "^4.19.2"
   }
 }
