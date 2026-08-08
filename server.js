@@ -29,7 +29,7 @@ const ROWS = {
 function seoDescription(title, year, genreNames) {
   const yearPart = year ? `ปี ${year}, ` : '';
   const genrePart = genreNames ? `หมวดหมู่ ${genreNames}, ` : '';
-  return `เรื่องย่อ นักแสดง คะแนนรีวิว และตัวอย่างภาพยนตร์ของ ${title} บน CineBox. ${genrePart}${yearPart}รวมข้อมูลครบจบในที่เดียว`;
+  return `เรื่องย่อ นักแสดง คะแนนรีวิว และตัวอย่างภาพยนตร์ของ ${title}. ${genrePart}${yearPart}รวมข้อมูลครบจบในที่เดียว`;
 }
 
 async function renderHome(req, res, tab) {
@@ -141,7 +141,7 @@ app.get('/movie/:id/:slug?', async (req, res) => {
     res.send(layout({ headHtml, bodyHtml, activeTab: 'movie' }));
   } catch (e) {
     res.status(404).send(layout({
-      headHtml: head({ title: 'ไม่พบภาพยนตร์ · CineBox', description: DEFAULT_DESC, url: `${SITE_URL}/movie/${id}`, robots: 'noindex, nofollow' }),
+      headHtml: head({ title: 'ไม่พบภาพยนตร์', description: DEFAULT_DESC, url: `${SITE_URL}/movie/${id}`, robots: 'noindex, nofollow' }),
       bodyHtml: `<a class="back-btn" href="/movie">← กลับ</a><div class="empty">ไม่พบภาพยนตร์ที่คุณต้องการ</div>`,
       activeTab: 'movie',
     }));
@@ -222,7 +222,7 @@ app.get('/tv/:id/:slug?', async (req, res) => {
     res.send(layout({ headHtml, bodyHtml, activeTab: 'tv' }));
   } catch (e) {
     res.status(404).send(layout({
-      headHtml: head({ title: 'ไม่พบซีรีส์ · CineBox', description: DEFAULT_DESC, url: `${SITE_URL}/tv/${id}`, robots: 'noindex, nofollow' }),
+      headHtml: head({ title: 'ไม่พบซีรีส์', description: DEFAULT_DESC, url: `${SITE_URL}/tv/${id}`, robots: 'noindex, nofollow' }),
       bodyHtml: `<a class="back-btn" href="/tv">← กลับ</a><div class="empty">ไม่พบซีรีส์ที่คุณต้องการ</div>`,
       activeTab: 'tv',
     }));
@@ -303,5 +303,5 @@ app.get('/robots.txt', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`CineBox-TH läuft auf: http://localhost:${PORT}`);
+  console.log(`Cinemath Server running on: ${SITE_URL}`);
 });
