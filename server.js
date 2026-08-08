@@ -22,7 +22,7 @@ const {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const SITE_URL = process.env.SITE_URL || 'https://cinebox-th.up.railway.app';
+const SITE_URL = process.env.SITE_URL || 'https://www.cinemath.duckdns.org';
 
 // ==========================================
 // KONFIGURASI FILE STATIS
@@ -303,7 +303,6 @@ app.get('/watch/:id/:season/:episode', async (req, res) => {
     const englishSlug = slugify(data.original_name || data.name);
     const targetUrl = `https://zeromovies4k.net/pt/tv/${id}/${season}/${episode}/${englishSlug}end`;
     
-    // Format SEO Judul: ดูซีรี่ย์ [Nama Inggris] ([Tahun]) [Nama Asli/Thai] Ep.[Episode] (จบ)
     const tvYear = (data.first_air_date || '').slice(0, 4) || '2026';
     const englishName = data.original_name || data.name || '';
     const thaiName = data.name || '';
@@ -561,22 +560,31 @@ app.get('/api/season/:tvId/:seasonNumber', async (req, res) => {
   }
 });
 
-// ---------- SITEMAP ----------
+// ---------- SITEMAP & ROBOTS ----------
 app.get('/sitemap.xml', async (req, res) => {
   try {
     const [mp, mt, tp, tt] = await Promise.all([
-      tmdb('/movie/popular'),
-      tmdb('/movie/top_rated'),
-      tmdb('/tv/popular'),
-      tmdb('/tv/top_rated'),
+      tmdb('/movie/popular').catch(() => ({ results: [] })),
+      tmdb('/movie/top_rated').catch(() => ({ results: [] })),
+      tmdb('/tv/popular').catch(() => ({ results: [] })),
+      tmdb('/tv/top_rated').catch(() => ({ results: [] })),
     ]);
+
     const today = new Date().toISOString().slice(0, 10);
     const urls = [
+      { loc: `${SITE_URL}/`, priority: '1.0', changefreq: 'daily' },
       { loc: `${SITE_URL}/movie`, priority: '1.0', changefreq: 'daily' },
       { loc: `${SITE_URL}/tv`, priority: '1.0', changefreq: 'daily' },
-      ...[...mp.results, ...mt.results].map(m => ({ loc: `${SITE_URL}/movie/${m.id}/${encodeURIComponent(slugify(m.title))}`, priority: '0.7', changefreq: 'weekly' })),
-      ...[...tp.results, ...tt.results].map(t => ({ loc: `${SITE_URL}/tv/${t.id}/${encodeURIComponent(slugify(t.name))}`, priority: '0.7', changefreq: 'weekly' })),
+      ...[...(mp.results || []), ...(mt.results || [])].map(m => ({ 
+        loc: `${SITE_URL}/movie/${m.id}/${encodeURIComponent(slugify(m.title) || 'film')}`, 
+        priority: '0.7', changefreq: 'weekly' 
+      })),
+      ...[...(tp.results || []), ...(tt.results || [])].map(t => ({ 
+        loc: `${SITE_URL}/tv/${t.id}/${encodeURIComponent(slugify(t.name) || 'serial')}`, 
+        priority: '0.7', changefreq: 'weekly' 
+      })),
     ];
+
     const uniq = [...new Map(urls.map(u => [u.loc, u])).values()];
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -587,9 +595,10 @@ ${uniq.map(u => `  <url>
     <priority>${u.priority}</priority>
   </url>`).join('\n')}
 </urlset>`;
+
     res.type('application/xml').send(xml);
   } catch (e) {
-    res.status(500).send('');
+    res.status(500).send('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>');
   }
 });
 
