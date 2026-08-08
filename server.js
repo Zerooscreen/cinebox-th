@@ -33,26 +33,30 @@ function seoDescription(title, year, genreNames) {
 
 async function renderHome(req, res, tab) {
   try {
-    const heroData = await tmdb(tab === 'movie' ? '/trending/movie/week' : '/trending/tv/week');
+    const rowDefs = ROWS[tab];
+    const promises = [
+      tmdb(tab === 'movie' ? '/trending/movie/week' : '/trending/tv/week').catch(() => null),
+      ...rowDefs.map(def => tmdb(def.path).catch(() => ({ results: [] })))
+    ];
+
+    const results = await Promise.all(promises);
+    const heroData = results[0];
+    const rowsData = results.slice(1);
+
     const hero = heroData && heroData.results ? heroData.results[0] : null;
     const heroTitle = hero ? (hero.title || hero.name) : SITE_NAME;
     const heroOverview = hero ? (hero.overview || '') : '';
 
-    const rowsHtml = [];
-    for (const def of ROWS[tab]) {
-      try {
-        const data = await tmdb(def.path);
-        const cards = (data && data.results ? data.results : []).slice(0, 12).map(item => posterCard(item, tab)).join('');
-        rowsHtml.push(`
-          <section class="row">
-            <div class="row-head"><span class="row-num">${def.key}</span><h2>${def.title}</h2></div>
-            <div class="grid">${cards}</div>
-          </section>
-        `);
-      } catch (err) {
-        console.error(`Error loading row ${def.path}:`, err.message);
-      }
-    }
+    const rowsHtml = rowDefs.map((def, index) => {
+      const data = rowsData[index];
+      const cards = (data && data.results ? data.results : []).slice(0, 12).map(item => posterCard(item, tab)).join('');
+      return `
+        <section class="row">
+          <div class="row-head"><span class="row-num">${def.key}</span><h2>${def.title}</h2></div>
+          <div class="grid">${cards}</div>
+        </section>
+      `;
+    }).join('');
 
     const heroHtml = hero ? `
       <div id="hero">
@@ -66,7 +70,7 @@ async function renderHome(req, res, tab) {
         </div>
       </div>` : '';
 
-    const bodyHtml = heroHtml + banner468x60() + `<div id="rows">${rowsHtml.join('')}</div>`;
+    const bodyHtml = heroHtml + banner468x60() + `<div id="rows">${rowsHtml}</div>`;
     const headHtml = head({
       title: DEFAULT_TITLE,
       description: DEFAULT_DESC,
